@@ -49,7 +49,7 @@ func GenerateSpriteSheet(images []image.Image, log *golog.Logger) (sheet draw.Im
 	// individual sprites
 	for _, img := range images {
 		bounds := img.Bounds()
-		sprites = append(sprites, image.Rect(0, sheetHeight, bounds.Dx(), bounds.Dy()))
+		sprites = append(sprites, image.Rect(0, sheetHeight, bounds.Dx(), sheetHeight + bounds.Dy()))
 		sheetHeight += bounds.Dy()
 		if bounds.Dx() > sheetWidth {
 			sheetWidth = bounds.Dx()
