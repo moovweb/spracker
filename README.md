@@ -1,4 +1,4 @@
-gosprite
+spracker
 ========
 
-Go language module for generating CSS sprite sheets.
+"Sprite Packer" -- a simple module for generating optimally-packed sprite sheets.
