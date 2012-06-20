@@ -9,7 +9,7 @@ import (
 	"golog"
 )
 
-func ReadImageFolder(path string, log *golog.Logger) (images []image.Image, err error) {
+func ReadImageFolder(path string, log *golog.Logger) (images map[string]image.Image, err error) {
 	dir, err := os.Open(path)
 	if err != nil {
 		log.Warning("Error opening sprite folder %s", path)
@@ -22,7 +22,7 @@ func ReadImageFolder(path string, log *golog.Logger) (images []image.Image, err 
 		return nil, err
 	}
 
-	images = make([]image.Image, 0, len(names))
+	images = make(map[string]image.Image)
 	for _, name := range names {
 		imgFile, err := os.Open(filepath.Join(path, name))
 		if err != nil {
@@ -35,22 +35,22 @@ func ReadImageFolder(path string, log *golog.Logger) (images []image.Image, err 
 			continue
 		}
 		imgFile.Close()
-		images = append(images, img)
+		images[name] = img
 	}
 
 	return images, nil
 }
 
-func GenerateSpriteSheet(images []image.Image, log *golog.Logger) (sheet draw.Image, sprites []image.Rectangle) {
+func GenerateSpriteSheet(images map[string]image.Image, log *golog.Logger) (sheet draw.Image, sprites map[string]image.Rectangle) {
 	var sheetHeight int = 0
 	var sheetWidth  int = 0
-	sprites = make([]image.Rectangle, 0, len(images))
+	sprites = make(map[string]image.Rectangle)
 
 	// calculate the size of the spritesheet and accumulate data for the
 	// individual sprites
-	for _, img := range images {
+	for name, img := range images {
 		bounds := img.Bounds()
-		sprites = append(sprites, image.Rect(0, sheetHeight, bounds.Dx(), sheetHeight + bounds.Dy()))
+		sprites[name] = image.Rect(0, sheetHeight, bounds.Dx(), sheetHeight + bounds.Dy())
 		sheetHeight += bounds.Dy()
 		if bounds.Dx() > sheetWidth {
 			sheetWidth = bounds.Dx()
@@ -61,8 +61,8 @@ func GenerateSpriteSheet(images []image.Image, log *golog.Logger) (sheet draw.Im
 	sheet = image.NewRGBA(image.Rect(0, 0, sheetWidth, sheetHeight))
 
 	// compose the sheet
-	for i, img := range images {
-		draw.Draw(sheet, sprites[i], img, image.Pt(0, 0), draw.Src)
+	for name, img := range images {
+		draw.Draw(sheet, sprites[name], img, image.Pt(0, 0), draw.Src)
 	}
 
 	return sheet, sprites
