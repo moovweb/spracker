@@ -16,6 +16,7 @@ func ReadImageFolder(path string, log *golog.Logger) (images []image.Image, err 
 		return nil, err
 	}
 	names, err := dir.Readdirnames(0)
+	dir.Close()
 	if err != nil {
 		log.Warning("Error gathering names of sprite files in %s", path)
 		return nil, err
@@ -24,7 +25,6 @@ func ReadImageFolder(path string, log *golog.Logger) (images []image.Image, err 
 	images = make([]image.Image, 0, len(names))
 	for _, name := range names {
 		imgFile, err := os.Open(filepath.Join(path, name))
-		defer imgFile.Close()
 		if err != nil {
 			log.Warning("Error reading sprite image from %s", name)
 			continue
@@ -34,6 +34,7 @@ func ReadImageFolder(path string, log *golog.Logger) (images []image.Image, err 
 			log.Warning("Error decoding png sprite image in %s", name)
 			continue
 		}
+		imgFile.Close()
 		images = append(images, img)
 	}
 
