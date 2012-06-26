@@ -1,11 +1,14 @@
-package gosprite
+package spracker
 
 import (
+	"image"
+	"image/draw"
+	"image/png"
 	"os"
 	"path/filepath"
-	"image"
-	"image/png"
-	"image/draw"
+)
+
+import (
 	"golog"
 )
 
@@ -43,14 +46,14 @@ func ReadImageFolder(path string, log *golog.Logger) (images map[string]image.Im
 
 func GenerateSpriteSheet(images map[string]image.Image, log *golog.Logger) (sheet draw.Image, sprites map[string]image.Rectangle) {
 	var sheetHeight int = 0
-	var sheetWidth  int = 0
+	var sheetWidth int = 0
 	sprites = make(map[string]image.Rectangle)
 
 	// calculate the size of the spritesheet and accumulate data for the
 	// individual sprites
 	for name, img := range images {
 		bounds := img.Bounds()
-		sprites[name] = image.Rect(0, sheetHeight, bounds.Dx(), sheetHeight + bounds.Dy())
+		sprites[name] = image.Rect(0, sheetHeight, bounds.Dx(), sheetHeight+bounds.Dy())
 		sheetHeight += bounds.Dy()
 		if bounds.Dx() > sheetWidth {
 			sheetWidth = bounds.Dx()
