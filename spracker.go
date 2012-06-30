@@ -12,7 +12,17 @@ import (
 	"golog"
 )
 
-func ReadImageFolder(path string, log *golog.Logger) (images map[string]image.Image, err error) {
+type Image struct {
+	Name string
+	image.Image
+}
+
+type Sprite struct {
+	Name string
+	image.Rectangle
+}
+
+func ReadImageFolder(path string, log *golog.Logger) (images []Image, err error) {
 	dir, err := os.Open(path)
 	if err != nil {
 		log.Warning("Error opening sprite folder %s", path)
@@ -25,7 +35,7 @@ func ReadImageFolder(path string, log *golog.Logger) (images map[string]image.Im
 		return nil, err
 	}
 
-	images = make(map[string]image.Image)
+	images = make([]Image, 0)
 	for _, name := range names {
 		imgFile, err := os.Open(filepath.Join(path, name))
 		if err != nil {
@@ -38,22 +48,22 @@ func ReadImageFolder(path string, log *golog.Logger) (images map[string]image.Im
 			continue
 		}
 		imgFile.Close()
-		images[name] = img
+		images = append(images, Image { name, img })
 	}
 
 	return images, nil
 }
 
-func GenerateSpriteSheet(images map[string]image.Image, log *golog.Logger) (sheet draw.Image, sprites map[string]image.Rectangle) {
+func GenerateSpriteSheet(images []Image, log *golog.Logger) (sheet draw.Image, sprites []Sprite) {
 	var sheetHeight int = 0
 	var sheetWidth int = 0
-	sprites = make(map[string]image.Rectangle)
+	sprites = make([]Sprite, 0)
 
 	// calculate the size of the spritesheet and accumulate data for the
 	// individual sprites
-	for name, img := range images {
+	for _, img := range images {
 		bounds := img.Bounds()
-		sprites[name] = image.Rect(0, sheetHeight, bounds.Dx(), sheetHeight+bounds.Dy())
+		sprites = append(sprites, Sprite { img.Name, image.Rect(0, sheetHeight, bounds.Dx(), sheetHeight + bounds.Dy()) })
 		sheetHeight += bounds.Dy()
 		if bounds.Dx() > sheetWidth {
 			sheetWidth = bounds.Dx()
@@ -64,8 +74,8 @@ func GenerateSpriteSheet(images map[string]image.Image, log *golog.Logger) (shee
 	sheet = image.NewRGBA(image.Rect(0, 0, sheetWidth, sheetHeight))
 
 	// compose the sheet
-	for name, img := range images {
-		draw.Draw(sheet, sprites[name], img, image.Pt(0, 0), draw.Src)
+	for i, img := range images {
+		draw.Draw(sheet, sprites[i].Rectangle, img, image.Pt(0, 0), draw.Src)
 	}
 
 	return sheet, sprites
