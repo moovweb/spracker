@@ -6,9 +6,9 @@ import (
 	"image/png"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 )
-
 import (
 	"golog"
 )
@@ -36,6 +36,9 @@ func ReadImageFolder(path string, log *golog.Logger) (images []Image, err error)
 		return nil, err
 	}
 
+	// put these in a canonical order, otherwise it'll be platform-specific
+	sort.Strings(names)
+
 	images = make([]Image, 0)
 	for _, name := range names {
 		imgFile, err := os.Open(filepath.Join(path, name))
@@ -59,8 +62,10 @@ func ReadImageFolder(path string, log *golog.Logger) (images []Image, err error)
 }
 
 func GenerateSpriteSheet(images []Image, log *golog.Logger) (sheet draw.Image, sprites []Sprite) {
-	var sheetHeight int = 0
-	var sheetWidth int = 0
+	var (
+		sheetHeight int = 0
+		sheetWidth  int = 0
+	)
 	sprites = make([]Sprite, 0)
 
 	// calculate the size of the spritesheet and accumulate data for the
