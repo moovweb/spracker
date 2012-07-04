@@ -6,6 +6,7 @@ import (
 	"image/png"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 import (
@@ -48,7 +49,10 @@ func ReadImageFolder(path string, log *golog.Logger) (images []Image, err error)
 			continue
 		}
 		imgFile.Close()
-		images = append(images, Image { name, img })
+		if strings.HasSuffix(name, ".png") {
+			name = name[0 : len(name)-4]
+		}
+		images = append(images, Image{name, img})
 	}
 
 	return images, nil
@@ -63,7 +67,7 @@ func GenerateSpriteSheet(images []Image, log *golog.Logger) (sheet draw.Image, s
 	// individual sprites
 	for _, img := range images {
 		bounds := img.Bounds()
-		sprites = append(sprites, Sprite { img.Name, image.Rect(0, sheetHeight, bounds.Dx(), sheetHeight + bounds.Dy()) })
+		sprites = append(sprites, Sprite{img.Name, image.Rect(0, sheetHeight, bounds.Dx(), sheetHeight+bounds.Dy())})
 		sheetHeight += bounds.Dy()
 		if bounds.Dx() > sheetWidth {
 			sheetWidth = bounds.Dx()

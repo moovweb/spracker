@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 )
 
@@ -12,7 +11,7 @@ import (
 
 func main() {
 	if len(os.Args) < 3 {
-		fmt.Println("Usage: sprite [image folder] [output filename]")
+		println("Usage: sprite [image folder] [output filename]")
 		os.Exit(0)
 	}
 	path := os.Args[1]
@@ -22,6 +21,9 @@ func main() {
 	images, _ := spracker.ReadImageFolder(path, log)
 	sheet, _ := spracker.GenerateSpriteSheet(images, log)
 
-	fmt.Printf("Read %d image files.\n", len(images))
-	spracker.WriteSpriteSheet(sheet, path, outName, log)
+	println("Read", len(images), "image files:")
+	for _, img := range images {
+		println(img.Name)
+	}
+	spracker.WriteSpriteSheet(sheet, "", outName, log)
 }
