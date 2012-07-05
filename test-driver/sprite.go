@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 )
 
@@ -19,11 +20,11 @@ func main() {
 	log := golog.NewLogger("sprite")
 
 	images, _ := spracker.ReadImageFolder(path, log)
-	sheet, _ := spracker.GenerateSpriteSheet(images, log)
+	sheet, sprites := spracker.GenerateSpriteSheet(images, log)
 
-	println("Read", len(images), "image files:")
-	for _, img := range images {
-		println(img.Name)
+	println("Read", len(images), "image files. Sprite layout:")
+	for i, img := range images {
+		fmt.Printf("%s: (%d,%d)\t-\t(%d,%d)\n", img.Name, sprites[i].Min.X, sprites[i].Min.Y, sprites[i].Max.X, sprites[i].Max.Y)
 	}
 	spracker.WriteSpriteSheet(sheet, "", outName, log)
 }
