@@ -24,7 +24,8 @@ func main() {
 
 	println("Read", len(images), "image files. Sprite layout:")
 	for i, img := range images {
-		fmt.Printf("%s: (%d,%d)\t-\t(%d,%d)\n", img.Name, sprites[i].Min.X, sprites[i].Min.Y, sprites[i].Max.X, sprites[i].Max.Y)
+		s := sprites[i]
+		fmt.Printf("%s: (%d,%d)\t-\t(%d,%d)\n", img.Name, s.Min.X, s.Min.Y, s.Max.X, s.Max.Y)
 	}
 	spracker.WriteSpriteSheet(sheet, "", outName, log)
 }
