@@ -11,12 +11,12 @@ import (
 )
 
 func main() {
-	if len(os.Args) < 3 {
-		println("Usage: sprite [image folder] [output filename]")
+	if len(os.Args) < 2 {
+		println("Usage: sprite [image folder]")
 		os.Exit(0)
 	}
 	path := os.Args[1]
-	outName := os.Args[2]
+	outName := path + ".png"
 	log := golog.NewLogger("sprite")
 
 	images, _ := spracker.ReadImageFolder(path, log)

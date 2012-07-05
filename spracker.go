@@ -127,7 +127,10 @@ func WriteSpriteSheet(img image.Image, path string, name string, log *golog.Logg
 // Generate an array of SCSS variable definitions. The bare minimum; should be
 // called for every spritesheet.
 func GenerateScssVariables(sheetName string, sheetImg image.Image, sprites []Sprite) (variables []string) {
-	variables = make([]string, 0, len(sprites) + 1)
+	variables = make([]string, 0, len(sprites) + 2)
+
+	sheetUrl := fmt.Sprintf("$spritesheet-%s-url: image-url(\"%s.png\");\n", sheetName, sheetName)
+	variables = append(variables, sheetUrl)
 
 	sheetWidth  := fmt.Sprintf("$spritesheet-%s-width: %d;", sheetName, sheetImg.Bounds().Max.X - sheetImg.Bounds().Min.X)
 	sheetHeight := fmt.Sprintf("$spritesheet-%s-height: %d;", sheetName, sheetImg.Bounds().Max.Y - sheetImg.Bounds().Min.Y)
