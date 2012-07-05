@@ -136,8 +136,8 @@ func GenerateScssVariables(sheetName string, sheetImg image.Image, sprites []Spr
 
 	for _, s := range sprites {
 		prefix := fmt.Sprintf("sprite-%s-%s", sheetName, s.Name)
-		vX     := fmt.Sprintf("$%s-x: %dpx;", prefix, s.Min.X)
-		vY     := fmt.Sprintf("$%s-y: %dpx;", prefix, s.Min.Y)
+		vX     := fmt.Sprintf("$%s-x: %dpx;", prefix, -s.Min.X)
+		vY     := fmt.Sprintf("$%s-y: %dpx;", prefix, -s.Min.Y)
 		vW     := fmt.Sprintf("$%s-width: %dpx;", prefix, s.Width())
 		vH     := fmt.Sprintf("$%s-height: %dpx;", prefix, s.Height())
 		def    := fmt.Sprintf("%s\n%s\n%s\n%s\n", vX, vY, vW, vH)
