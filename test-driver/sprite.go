@@ -28,4 +28,9 @@ func main() {
 		fmt.Printf("%s: (%d,%d)\t-\t(%d,%d)\n", img.Name, s.Min.X, s.Min.Y, s.Max.X, s.Max.Y)
 	}
 	spracker.WriteSpriteSheet(sheet, "", outName, log)
+
+	variables := spracker.GenerateScssVariables(path, sheet, sprites)
+	for _, v := range variables {
+		println(v)
+	}
 }

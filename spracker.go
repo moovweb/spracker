@@ -1,6 +1,7 @@
 package spracker
 
 import (
+	"fmt"
 	"image"
 	"image/draw"
 	"image/png"
@@ -105,4 +106,25 @@ func WriteSpriteSheet(img image.Image, path string, name string, log *golog.Logg
 	}
 	outFile.Close()
 	return nil
+}
+
+func GenerateScssVariables(sheetName string, sheetImg image.Image, sprites []Sprite) (variables []string) {
+	variables = make([]string, 0, len(sprites) + 1)
+
+	sheetWidth  := fmt.Sprintf("$spritesheet-%s-width: %d;", sheetName, sheetImg.Bounds().Max.X - sheetImg.Bounds().Min.X)
+	sheetHeight := fmt.Sprintf("$spritesheet-%s-height: %d;", sheetName, sheetImg.Bounds().Max.Y - sheetImg.Bounds().Min.Y)
+	def         := fmt.Sprintf("%s\n%s\n", sheetWidth, sheetHeight)
+	variables = append(variables, def)
+
+	for _, s := range sprites {
+		prefix := fmt.Sprintf("sprite-%s-%s", sheetName, s.Name)
+		vX     := fmt.Sprintf("$%s-x: %dpx;", prefix, s.Min.X)
+		vY     := fmt.Sprintf("$%s-y: %dpx;", prefix, s.Min.Y)
+		vW     := fmt.Sprintf("$%s-width: %dpx;", prefix, s.Max.X - s.Min.X)
+		vH     := fmt.Sprintf("$%s-height: %dpx;", prefix, s.Max.Y - s.Min.Y)
+		def    := fmt.Sprintf("%s\n%s\n%s\n%s\n", vX, vY, vW, vH)
+		variables = append(variables, def)
+	}
+
+	return
 }
