@@ -124,8 +124,7 @@ func WriteSpriteSheet(img image.Image, path string, name string, log *golog.Logg
 }
 
 
-// Generate an array of SCSS variable definitions. The bare minimum; should be
-// called for every spritesheet.
+// Generate an array of SCSS variable definitions.
 func GenerateScssVariables(sheetName string, sheetImg image.Image, sprites []Sprite) (variables []string) {
 	variables = make([]string, 0, len(sprites) + 2)
 
@@ -150,8 +149,7 @@ func GenerateScssVariables(sheetName string, sheetImg image.Image, sprites []Spr
 	return
 }
 
-// Generate an array of SCSS mixin definitions. The generated output assumes
-// that SCSS variables have been generated as well.
+// Generate an array of SCSS mixin definitions.
 const mixinFormat string =
 `@mixin sprite-%s-%s() {
   background: image-url("%s.png") no-repeat %dpx %dpx;
