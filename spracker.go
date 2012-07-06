@@ -105,25 +105,6 @@ func GenerateSpriteSheet(images []Image) (sheet draw.Image, sprites []Sprite) {
 	return sheet, sprites
 }
 
-// Write the spritesheet image to a file.
-func WriteSpriteSheet(img image.Image, folder string, name string, log *golog.Logger) (err error) {
-	fullname := filepath.Join(folder, name + ".png")
-	os.Remove(fullname)
-	outFile, err := os.Create(fullname)
-	if err != nil {
-		log.Warning("Error opening spritesheet output file %s", fullname)
-		return err
-	}
-	err = png.Encode(outFile, img)
-	if err != nil {
-		log.Warning("Error outputting spritesheet to %s", fullname)
-		return err
-	}
-	outFile.Close()
-	return nil
-}
-
-
 // Generate an array of SCSS variable definitions.
 func GenerateScssVariables(sheetName string, sheetImg image.Image, sprites []Sprite) string {
 	variables := make([]string, 0, len(sprites) + 2)
@@ -168,7 +149,8 @@ func GenerateScssMixins(sheetName string, sprites []Sprite) string {
 	return strings.Join(mixins, "\n")
 }
 
-// Read 
+// Read a folder containing subfolders which contain sprites, and generate a
+// spritesheet for each subfolder.
 func GenerateSpriteSheetsFromFolders(superFolder string, log *golog.Logger) (spriteSheets []Image, styleSheets []string, err error) {
 	container, err := os.Open(superFolder)
 	if err != nil {
@@ -185,10 +167,12 @@ func GenerateSpriteSheetsFromFolders(superFolder string, log *golog.Logger) (spr
 	spriteSheets = make([]Image, 0)
 	styleSheets  = make([]string, 0)
 
+	var anyErrors error = nil
 	for _, folder := range folders {
-		images, err := ReadImageFolder(folder, log)
+		images, err := ReadImageFolder(filepath.Join(superFolder, folder), log)
 		if err != nil {
-			return nil, nil, err // TO DO: make more resilient
+			anyErrors = err
+			continue
 		}
 		sheet, sprites := GenerateSpriteSheet(images)
 		vars   := GenerateScssVariables(folder, sheet, sprites)
@@ -196,6 +180,43 @@ func GenerateSpriteSheetsFromFolders(superFolder string, log *golog.Logger) (spr
 		spriteSheets = append(spriteSheets, Image{folder, sheet})
 		styleSheets  = append(styleSheets, fmt.Sprintf("%s\n%s", vars, mixins))
 	}
+	err = anyErrors
 
 	return
+}
+
+// Write the spritesheet image to a file.
+func WriteSpriteSheet(img image.Image, folder string, name string, log *golog.Logger) (err error) {
+	fullname := filepath.Join(folder, name + ".png")
+	os.Remove(fullname)
+	outFile, err := os.Create(fullname)
+	if err != nil {
+		log.Warning("Error opening spritesheet output file %s", fullname)
+		return err
+	}
+	err = png.Encode(outFile, img)
+	if err != nil {
+		log.Warning("Error outputting spritesheet to %s", fullname)
+		return err
+	}
+	outFile.Close()
+	return nil
+}
+
+// Write a stylesheet string to a file.
+func WriteStyleSheet(style string, folder string, name string, log *golog.Logger) (err error) {
+	fullname := filepath.Join(folder, name + ".scss")
+	os.Remove(fullname)
+	outFile, err := os.Create(fullname)
+	if err != nil {
+		log.Warning("Error opening SCSS output file %s", fullname)
+		return err
+	}
+	_, err = outFile.WriteString(style)
+	if err != nil {
+		log.Warning("Error outputting SCSS to %s", fullname)
+		return err
+	}
+	outFile.Close()
+	return nil
 }
