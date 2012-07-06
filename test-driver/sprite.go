@@ -15,7 +15,6 @@ func main() {
 	if len(os.Args) > 1 {
 		path = os.Args[1]
 	}
-	println(path)
 	log := golog.NewLogger("sprite")
 
 	// images, _ := spracker.ReadImageFolder(path, log)
