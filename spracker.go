@@ -76,7 +76,7 @@ func ReadImageFolder(path string, log *golog.Logger) (images []Image, err error)
 }
 
 // Compose the spritesheet image and return an array of individual sprite data.
-func GenerateSpriteSheet(images []Image, log *golog.Logger) (sheet draw.Image, sprites []Sprite) {
+func GenerateSpriteSheet(images []Image) (sheet draw.Image, sprites []Sprite) {
 	var (
 		sheetHeight int = 0
 		sheetWidth  int = 0
@@ -106,8 +106,8 @@ func GenerateSpriteSheet(images []Image, log *golog.Logger) (sheet draw.Image, s
 }
 
 // Write the spritesheet image to a file.
-func WriteSpriteSheet(img image.Image, path string, name string, log *golog.Logger) (err error) {
-	fullname := filepath.Join(path, name)
+func WriteSpriteSheet(img image.Image, folder string, name string, log *golog.Logger) (err error) {
+	fullname := filepath.Join(folder, name + ".png")
 	os.Remove(fullname)
 	outFile, err := os.Create(fullname)
 	if err != nil {
@@ -125,8 +125,8 @@ func WriteSpriteSheet(img image.Image, path string, name string, log *golog.Logg
 
 
 // Generate an array of SCSS variable definitions.
-func GenerateScssVariables(sheetName string, sheetImg image.Image, sprites []Sprite) (variables []string) {
-	variables = make([]string, 0, len(sprites) + 2)
+func GenerateScssVariables(sheetName string, sheetImg image.Image, sprites []Sprite) string {
+	variables := make([]string, 0, len(sprites) + 2)
 
 	sheetUrl := fmt.Sprintf("$spritesheet-%s-url: image-url(\"%s.png\");\n", sheetName, sheetName)
 	variables = append(variables, sheetUrl)
@@ -146,7 +146,7 @@ func GenerateScssVariables(sheetName string, sheetImg image.Image, sprites []Spr
 		variables = append(variables, def)
 	}
 
-	return
+	return strings.Join(variables, "\n")
 }
 
 // Generate an array of SCSS mixin definitions.
@@ -157,12 +157,44 @@ const mixinFormat string =
   height: %dpx;
 }
 `
-func GenerateScssMixins(sheetName string, sprites []Sprite) (mixins []string) {
-	mixins = make([]string, 0, len(sprites))
+func GenerateScssMixins(sheetName string, sprites []Sprite) string {
+	mixins := make([]string, 0, len(sprites))
 
 	for _, s := range sprites {
 		def := fmt.Sprintf(mixinFormat, sheetName, s.Name, sheetName, -s.Min.X, -s.Min.Y, s.Width(), s.Height())
 		mixins = append(mixins, def)
+	}
+
+	return strings.Join(mixins, "\n")
+}
+
+// Read 
+func GenerateSpriteSheetsFromFolders(superFolder string, log *golog.Logger) (spriteSheets []Image, styleSheets []string, err error) {
+	container, err := os.Open(superFolder)
+	if err != nil {
+		log.Warning("Error opening folder %s containing sprite subfolders", superFolder)
+		return nil, nil, err
+	}
+	folders, err := container.Readdirnames(0)
+	container.Close()
+	if err != nil {
+		log.Warning("Error gathering names of sprite subfolders in %s", superFolder)
+		return nil, nil, err
+	}
+
+	spriteSheets = make([]Image, 0)
+	styleSheets  = make([]string, 0)
+
+	for _, folder := range folders {
+		images, err := ReadImageFolder(folder, log)
+		if err != nil {
+			return nil, nil, err // TO DO: make more resilient
+		}
+		sheet, sprites := GenerateSpriteSheet(images)
+		vars   := GenerateScssVariables(folder, sheet, sprites)
+		mixins := GenerateScssMixins(folder, sprites)
+		spriteSheets = append(spriteSheets, Image{folder, sheet})
+		styleSheets  = append(styleSheets, fmt.Sprintf("%s\n%s", vars, mixins))
 	}
 
 	return
