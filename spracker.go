@@ -124,10 +124,10 @@ func GenerateScssVariables(sheetName string, sheetImg image.Image, sprites []Spr
 			factor = 1
 		}
 		prefix := fmt.Sprintf("%s-%s", sheetName, name)
-		vX     := fmt.Sprintf("$%s-x: %#vpx;", prefix, -s.Min.X/factor)
-		vY     := fmt.Sprintf("$%s-y: %#vpx;", prefix, -s.Min.Y/factor)
-		vW     := fmt.Sprintf("$%s-width: %#vpx;", prefix, s.Width()/factor)
-		vH     := fmt.Sprintf("$%s-height: %#vpx;", prefix, s.Height()/factor)
+		vX     := fmt.Sprintf("$%s-x: %#vpx;", prefix, float32(-s.Min.X)/factor)
+		vY     := fmt.Sprintf("$%s-y: %#vpx;", prefix, float32(-s.Min.Y)/factor)
+		vW     := fmt.Sprintf("$%s-width: %#vpx;", prefix, float32(s.Width())/factor)
+		vH     := fmt.Sprintf("$%s-height: %#vpx;", prefix, float32(s.Height())/factor)
 		def    := fmt.Sprintf("%s\n%s\n%s\n%s\n", vX, vY, vW, vH)
 		variables = append(variables, def)
 	}
@@ -151,7 +151,7 @@ func GenerateScssMixins(sheetName string, sprites []Sprite) string {
 		if !isMag {
 			factor = 1
 		}
-		def := fmt.Sprintf(mixinFormat, sheetName, name, sheetName, -s.Min.X/factor, -s.Min.Y/factor, s.Width()/factor, s.Height()/factor)
+		def := fmt.Sprintf(mixinFormat, sheetName, name, sheetName, float32(-s.Min.X)/factor, float32(-s.Min.Y)/factor, float32(s.Width())/factor, float32(s.Height())/factor)
 		mixins = append(mixins, def)
 	}
 
@@ -170,7 +170,11 @@ func GenerateCssClasses(sheetName string, sprites []Sprite) string {
 	classes := make([]string, 0, len(sprites))
 
 	for _, s := range sprites {
-		class := fmt.Sprintf(classFormat, sheetName, s.Name, sheetName, -s.Min.X, -s.Min.Y, s.Width(), s.Height())
+		isMag, name, factor := IsMagnified(s.Name)
+		if !isMag {
+			factor = 1
+		}
+		class := fmt.Sprintf(classFormat, sheetName, name, sheetName, float32(-s.Min.X)/factor, float32(-s.Min.Y)/factor, float32(s.Width())/factor, float32(s.Height())/factor)
 		classes = append(classes, class)
 	}
 
