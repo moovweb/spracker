@@ -119,15 +119,15 @@ func GenerateScssVariables(sheetName string, sheetImg image.Image, sprites []Spr
 	variables = append(variables, def)
 
 	for _, s := range sprites {
-		isMag, baseName, factor := IsMagnified(s.Name)
-		if isMag {
-			fmt.Printf("Retina sprite: %s, %#v\n", baseName, factor)
+		isMag, name, factor := IsMagnified(s.Name)
+		if !isMag {
+			factor = 1
 		}
-		prefix := fmt.Sprintf("%s-%s", sheetName, s.Name)
-		vX     := fmt.Sprintf("$%s-x: %#vpx;", prefix, -s.Min.X)
-		vY     := fmt.Sprintf("$%s-y: %#vpx;", prefix, -s.Min.Y)
-		vW     := fmt.Sprintf("$%s-width: %#vpx;", prefix, s.Width())
-		vH     := fmt.Sprintf("$%s-height: %#vpx;", prefix, s.Height())
+		prefix := fmt.Sprintf("%s-%s", sheetName, name)
+		vX     := fmt.Sprintf("$%s-x: %#vpx;", prefix, -s.Min.X/factor)
+		vY     := fmt.Sprintf("$%s-y: %#vpx;", prefix, -s.Min.Y/factor)
+		vW     := fmt.Sprintf("$%s-width: %#vpx;", prefix, s.Width()/factor)
+		vH     := fmt.Sprintf("$%s-height: %#vpx;", prefix, s.Height()/factor)
 		def    := fmt.Sprintf("%s\n%s\n%s\n%s\n", vX, vY, vW, vH)
 		variables = append(variables, def)
 	}
@@ -147,7 +147,11 @@ func GenerateScssMixins(sheetName string, sprites []Sprite) string {
 	mixins := make([]string, 0, len(sprites))
 
 	for _, s := range sprites {
-		def := fmt.Sprintf(mixinFormat, sheetName, s.Name, sheetName, -s.Min.X, -s.Min.Y, s.Width(), s.Height())
+		isMag, name, factor := IsMagnified(s.Name)
+		if !isMag {
+			factor = 1
+		}
+		def := fmt.Sprintf(mixinFormat, sheetName, name, sheetName, -s.Min.X/factor, -s.Min.Y/factor, s.Width()/factor, s.Height()/factor)
 		mixins = append(mixins, def)
 	}
 
