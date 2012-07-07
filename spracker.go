@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -112,17 +113,21 @@ func GenerateScssVariables(sheetName string, sheetImg image.Image, sprites []Spr
 	sheetUrl := fmt.Sprintf("$%s-url: image-url(\"%s.png\");\n", sheetName, sheetName)
 	variables = append(variables, sheetUrl)
 
-	sheetWidth  := fmt.Sprintf("$%s-width: %dpx;", sheetName, sheetImg.Bounds().Max.X - sheetImg.Bounds().Min.X)
-	sheetHeight := fmt.Sprintf("$%s-height: %dpx;", sheetName, sheetImg.Bounds().Max.Y - sheetImg.Bounds().Min.Y)
+	sheetWidth  := fmt.Sprintf("$%s-width: %#vpx;", sheetName, sheetImg.Bounds().Max.X - sheetImg.Bounds().Min.X)
+	sheetHeight := fmt.Sprintf("$%s-height: %#vpx;", sheetName, sheetImg.Bounds().Max.Y - sheetImg.Bounds().Min.Y)
 	def         := fmt.Sprintf("%s\n%s\n", sheetWidth, sheetHeight)
 	variables = append(variables, def)
 
 	for _, s := range sprites {
+		isMag, baseName, factor := IsMagnified(s.Name)
+		if isMag {
+			fmt.Printf("Retina sprite: %s, %#v\n", baseName, factor)
+		}
 		prefix := fmt.Sprintf("%s-%s", sheetName, s.Name)
-		vX     := fmt.Sprintf("$%s-x: %dpx;", prefix, -s.Min.X)
-		vY     := fmt.Sprintf("$%s-y: %dpx;", prefix, -s.Min.Y)
-		vW     := fmt.Sprintf("$%s-width: %dpx;", prefix, s.Width())
-		vH     := fmt.Sprintf("$%s-height: %dpx;", prefix, s.Height())
+		vX     := fmt.Sprintf("$%s-x: %#vpx;", prefix, -s.Min.X)
+		vY     := fmt.Sprintf("$%s-y: %#vpx;", prefix, -s.Min.Y)
+		vW     := fmt.Sprintf("$%s-width: %#vpx;", prefix, s.Width())
+		vH     := fmt.Sprintf("$%s-height: %#vpx;", prefix, s.Height())
 		def    := fmt.Sprintf("%s\n%s\n%s\n%s\n", vX, vY, vW, vH)
 		variables = append(variables, def)
 	}
@@ -133,9 +138,9 @@ func GenerateScssVariables(sheetName string, sheetImg image.Image, sprites []Spr
 // Generate an array of SCSS mixin definitions.
 const mixinFormat string =
 `@mixin %s-%s() {
-  background: image-url("%s.png") no-repeat %dpx %dpx;
-  width: %dpx;
-  height: %dpx;
+  background: image-url("%s.png") no-repeat %#vpx %#vpx;
+  width: %#vpx;
+  height: %#vpx;
 }
 `
 func GenerateScssMixins(sheetName string, sprites []Sprite) string {
@@ -152,9 +157,9 @@ func GenerateScssMixins(sheetName string, sprites []Sprite) string {
 // Generate an array of CSS class definitions.
 const classFormat string =
 `.%s-%s {
-  background: image-url("%s.png") no-repeat %dpx %dpx;
-  width: %dpx;
-  height: %dpx;
+  background: image-url("%s.png") no-repeat %#vpx %#vpx;
+  width: %#vpx;
+  height: %#vpx;
 }
 `
 func GenerateCssClasses(sheetName string, sprites []Sprite) string {
@@ -202,6 +207,29 @@ func GenerateSpriteSheetsFromFolders(superFolder string, log *golog.Logger) (spr
 	}
 	err = anyErrors
 
+	return
+}
+
+// Check whether a sprite name describes a hi-res (e.g. retina) sprite. If so,
+// return the base name and magnification factor.
+func IsMagnified(name string) (isIt bool, baseName string, factor float32) {
+
+	segments := strings.Split(name, "@")
+	if len(segments) != 2 {
+		return false, name, 1
+	}
+	baseName = segments[0]
+	factorStr := segments[1]
+	if factorStr[len(factorStr)-1] == 'x' {
+		f, err := strconv.ParseFloat(factorStr[0:len(factorStr)-1], 32)
+		if err != nil {
+			return false, name, 1
+		}
+		factor = float32(f)
+		isIt = true
+	} else {
+		return false, name, 1
+	}
 	return
 }
 
