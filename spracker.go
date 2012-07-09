@@ -138,20 +138,23 @@ func GenerateScssVariables(sheetName string, sheetImg image.Image, sprites []Spr
 // Generate an array of SCSS mixin definitions.
 const mixinFormat string =
 `@mixin %s-%s() {
-  background: image-url("%s.png") no-repeat %#vpx %#vpx;
+  background: image-url("%s.png") no-repeat %#vpx %#vpx;%s
   width: %#vpx;
   height: %#vpx;
 }
 `
-func GenerateScssMixins(sheetName string, sprites []Sprite) string {
+func GenerateScssMixins(sheetName string, sheetImg image.Image, sprites []Sprite) string {
 	mixins := make([]string, 0, len(sprites))
 
 	for _, s := range sprites {
 		isMag, name, factor := IsMagnified(s.Name)
+		bgSize := ""
 		if !isMag {
 			factor = 1
+		} else {
+			bgSize = fmt.Sprintf("\n  @include background-size(%vpx %vpx);", float32(sheetImg.Bounds().Max.X)/factor, float32(sheetImg.Bounds().Max.Y)/factor)
 		}
-		def := fmt.Sprintf(mixinFormat, sheetName, name, sheetName, float32(-s.Min.X)/factor, float32(-s.Min.Y)/factor, float32(s.Width())/factor, float32(s.Height())/factor)
+		def := fmt.Sprintf(mixinFormat, sheetName, name, sheetName, float32(-s.Min.X)/factor, float32(-s.Min.Y)/factor, bgSize, float32(s.Width())/factor, float32(s.Height())/factor)
 		mixins = append(mixins, def)
 	}
 
@@ -161,20 +164,23 @@ func GenerateScssMixins(sheetName string, sprites []Sprite) string {
 // Generate an array of CSS class definitions.
 const classFormat string =
 `.%s-%s {
-  background: image-url("%s.png") no-repeat %#vpx %#vpx;
+  background: image-url("%s.png") no-repeat %#vpx %#vpx;%s
   width: %#vpx;
   height: %#vpx;
 }
 `
-func GenerateCssClasses(sheetName string, sprites []Sprite) string {
+func GenerateCssClasses(sheetName string, sheetImg image.Image, sprites []Sprite) string {
 	classes := make([]string, 0, len(sprites))
 
 	for _, s := range sprites {
 		isMag, name, factor := IsMagnified(s.Name)
+		bgSize := ""
 		if !isMag {
 			factor = 1
+		} else {
+			bgSize = fmt.Sprintf("\n  @include background-size(%vpx %vpx);", float32(sheetImg.Bounds().Max.X)/factor, float32(sheetImg.Bounds().Max.Y)/factor)
 		}
-		class := fmt.Sprintf(classFormat, sheetName, name, sheetName, float32(-s.Min.X)/factor, float32(-s.Min.Y)/factor, float32(s.Width())/factor, float32(s.Height())/factor)
+		class := fmt.Sprintf(classFormat, sheetName, name, sheetName, float32(-s.Min.X)/factor, float32(-s.Min.Y)/factor, bgSize, float32(s.Width())/factor, float32(s.Height())/factor)
 		classes = append(classes, class)
 	}
 
@@ -208,8 +214,8 @@ func GenerateSpriteSheetsFromFolders(superFolder string, log *golog.Logger) (spr
 		}
 		sheet, sprites := GenerateSpriteSheet(images)
 		vars    := GenerateScssVariables(folder, sheet, sprites)
-		mixins  := GenerateScssMixins(folder, sprites)
-		classes := GenerateCssClasses(folder, sprites)
+		mixins  := GenerateScssMixins(folder, sheet, sprites)
+		classes := GenerateCssClasses(folder, sheet, sprites)
 		spriteSheets = append(spriteSheets, Image{folder, sheet})
 		styleSheets  = append(styleSheets, fmt.Sprintf("%s\n%s\n%s", vars, mixins, classes))
 	}
