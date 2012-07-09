@@ -11,9 +11,13 @@ import (
 )
 
 func main() {
-	path := "."
+	imagePath := "."
+	stylePath := "."
 	if len(os.Args) > 1 {
-		path = os.Args[1]
+		imagePath = os.Args[1]
+	}
+	if len(os.Args) > 2 {
+		stylePath = os.Args[2]
 	}
 	log := golog.NewLogger("sprite")
 
@@ -30,9 +34,9 @@ func main() {
 	// println(spracker.GenerateScssVariables(path, sheet, sprites))
 	// println(spracker.GenerateScssMixins(path, sprites))
 
-	sheets, styles, _ := spracker.GenerateSpriteSheetsFromFolders(path, log)
+	sheets, styles, _ := spracker.GenerateSpriteSheetsFromFolders(imagePath, log)
 	for i, sheet := range sheets {
-		spracker.WriteSpriteSheet(sheet.Image, path, sheet.Name, log)
-		spracker.WriteStyleSheet(styles[i], path, sheet.Name, log)
+		spracker.WriteSpriteSheet(sheet.Image, imagePath, sheet.Name, log)
+		spracker.WriteStyleSheet(styles[i], stylePath, sheet.Name, log)
 	}
 }
