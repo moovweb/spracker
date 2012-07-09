@@ -187,6 +187,43 @@ func GenerateCssClasses(sheetName string, sheetImg image.Image, sprites []Sprite
 	return strings.Join(classes, "\n")
 }
 
+func SpritesModified(folder string) (bool, error) {
+	sheetFileName := folder + ".png"
+	sheetStat, err := os.Stat(sheetFileName)
+	if err != nil {
+		return true, nil // basically checking to see if the spritesheet exists
+	}
+	sheetModTime := sheetStat.ModTime()
+	folderStat, err := os.Stat(folder)
+	if err != nil {
+		return false, err
+	}
+	folderModTime := folderStat.ModTime()
+	if folderModTime.After(sheetModTime) {
+		return true, nil
+	}
+	dir, err := os.Open(folder)
+	if err != nil {
+		return false, err
+	}
+	imageNames, err := dir.Readdirnames(0)
+	if err != nil {
+		return false, err
+	}
+	for _, imgBaseName := range imageNames {
+		imgPath := filepath.Join(folder, imgBaseName)
+		imgStat, err := os.Stat(imgPath)
+		if err != nil {
+			continue
+		}
+		imgModTime := imgStat.ModTime()
+		if imgModTime.After(sheetModTime) {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 // Read a folder containing subfolders which contain sprites, and generate a
 // spritesheet for each subfolder.
 func GenerateSpriteSheetsFromFolders(superFolder string, log *golog.Logger) (spriteSheets []Image, styleSheets []string, err error) {
@@ -207,6 +244,14 @@ func GenerateSpriteSheetsFromFolders(superFolder string, log *golog.Logger) (spr
 
 	var anyErrors error = nil
 	for _, folder := range folders {
+		modified, err := SpritesModified(filepath.Join(superFolder, folder))
+		if err != nil {
+			anyErrors = err
+			continue
+		}
+		if !modified {
+			continue
+		}
 		images, err := ReadImageFolder(filepath.Join(superFolder, folder), log)
 		if err != nil {
 			anyErrors = err
