@@ -34,7 +34,7 @@ func main() {
 	// println(spracker.GenerateScssVariables(path, sheet, sprites))
 	// println(spracker.GenerateScssMixins(path, sprites))
 
-	sheets, styles, _ := spracker.GenerateSpriteSheetsFromFolders(imagePath, log)
+	sheets, styles, _ := spracker.GenerateSpriteSheetsFromFolders(imagePath, imagePath, true, log)
 	for i, sheet := range sheets {
 		spracker.WriteSpriteSheet(sheet.Image, imagePath, sheet.Name, log)
 		spracker.WriteStyleSheet(styles[i], stylePath, sheet.Name, log)

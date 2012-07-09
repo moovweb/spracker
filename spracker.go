@@ -107,10 +107,10 @@ func GenerateSpriteSheet(images []Image) (sheet draw.Image, sprites []Sprite) {
 }
 
 // Generate an array of SCSS variable definitions.
-func GenerateScssVariables(sheetName string, sheetImg image.Image, sprites []Sprite) string {
+func GenerateScssVariables(folder string, sheetName string, sheetImg image.Image, sprites []Sprite) string {
 	variables := make([]string, 0, len(sprites) + 2)
 
-	sheetUrl := fmt.Sprintf("$%s-url: image-url(\"%s.png\");\n", sheetName, sheetName)
+	sheetUrl := fmt.Sprintf("$%s-url: image-url(\"%s.png\");\n", sheetName, filepath.Join(folder, sheetName))
 	variables = append(variables, sheetUrl)
 
 	sheetWidth  := fmt.Sprintf("$%s-width: %#vpx;", sheetName, sheetImg.Bounds().Max.X - sheetImg.Bounds().Min.X)
@@ -143,7 +143,7 @@ const mixinFormat string =
   height: %#vpx;
 }
 `
-func GenerateScssMixins(sheetName string, sheetImg image.Image, sprites []Sprite) string {
+func GenerateScssMixins(folder string, sheetName string, sheetImg image.Image, sprites []Sprite) string {
 	mixins := make([]string, 0, len(sprites))
 
 	for _, s := range sprites {
@@ -154,7 +154,7 @@ func GenerateScssMixins(sheetName string, sheetImg image.Image, sprites []Sprite
 		} else {
 			bgSize = fmt.Sprintf("\n  @include background-size(%vpx %vpx);", float32(sheetImg.Bounds().Max.X)/factor, float32(sheetImg.Bounds().Max.Y)/factor)
 		}
-		def := fmt.Sprintf(mixinFormat, sheetName, name, sheetName, float32(-s.Min.X)/factor, float32(-s.Min.Y)/factor, bgSize, float32(s.Width())/factor, float32(s.Height())/factor)
+		def := fmt.Sprintf(mixinFormat, sheetName, name, filepath.Join(folder, sheetName), float32(-s.Min.X)/factor, float32(-s.Min.Y)/factor, bgSize, float32(s.Width())/factor, float32(s.Height())/factor)
 		mixins = append(mixins, def)
 	}
 
@@ -169,7 +169,7 @@ const classFormat string =
   height: %#vpx;
 }
 `
-func GenerateCssClasses(sheetName string, sheetImg image.Image, sprites []Sprite) string {
+func GenerateCssClasses(folder string, sheetName string, sheetImg image.Image, sprites []Sprite) string {
 	classes := make([]string, 0, len(sprites))
 
 	for _, s := range sprites {
@@ -180,7 +180,7 @@ func GenerateCssClasses(sheetName string, sheetImg image.Image, sprites []Sprite
 		} else {
 			bgSize = fmt.Sprintf("\n  @include background-size(%vpx %vpx);", float32(sheetImg.Bounds().Max.X)/factor, float32(sheetImg.Bounds().Max.Y)/factor)
 		}
-		class := fmt.Sprintf(classFormat, sheetName, name, sheetName, float32(-s.Min.X)/factor, float32(-s.Min.Y)/factor, bgSize, float32(s.Width())/factor, float32(s.Height())/factor)
+		class := fmt.Sprintf(classFormat, sheetName, name, filepath.Join(folder, sheetName), float32(-s.Min.X)/factor, float32(-s.Min.Y)/factor, bgSize, float32(s.Width())/factor, float32(s.Height())/factor)
 		classes = append(classes, class)
 	}
 
@@ -226,7 +226,7 @@ func SpritesModified(folder string) (bool, error) {
 
 // Read a folder containing subfolders which contain sprites, and generate a
 // spritesheet for each subfolder.
-func GenerateSpriteSheetsFromFolders(superFolder string, log *golog.Logger) (spriteSheets []Image, styleSheets []string, err error) {
+func GenerateSpriteSheetsFromFolders(superFolder string, outputFolder string, checkTimeStamps bool, log *golog.Logger) (spriteSheets []Image, styleSheets []string, err error) {
 	container, err := os.Open(superFolder)
 	if err != nil {
 		log.Warning("Error opening folder %s containing sprite subfolders", superFolder)
@@ -244,13 +244,15 @@ func GenerateSpriteSheetsFromFolders(superFolder string, log *golog.Logger) (spr
 
 	var anyErrors error = nil
 	for _, folder := range folders {
-		modified, err := SpritesModified(filepath.Join(superFolder, folder))
-		if err != nil {
-			anyErrors = err
-			continue
-		}
-		if !modified {
-			continue
+		if checkTimeStamps {
+			modified, err := SpritesModified(filepath.Join(superFolder, folder))
+			if err != nil {
+				anyErrors = err
+				continue
+			}
+			if !modified {
+				continue
+			}
 		}
 		images, err := ReadImageFolder(filepath.Join(superFolder, folder), log)
 		if err != nil {
@@ -258,9 +260,9 @@ func GenerateSpriteSheetsFromFolders(superFolder string, log *golog.Logger) (spr
 			continue
 		}
 		sheet, sprites := GenerateSpriteSheet(images)
-		vars    := GenerateScssVariables(folder, sheet, sprites)
-		mixins  := GenerateScssMixins(folder, sheet, sprites)
-		classes := GenerateCssClasses(folder, sheet, sprites)
+		vars    := GenerateScssVariables(outputFolder, folder, sheet, sprites)
+		mixins  := GenerateScssMixins(outputFolder, folder, sheet, sprites)
+		classes := GenerateCssClasses(outputFolder, folder, sheet, sprites)
 		spriteSheets = append(spriteSheets, Image{folder, sheet})
 		styleSheets  = append(styleSheets, fmt.Sprintf("%s\n%s\n%s", vars, mixins, classes))
 	}
