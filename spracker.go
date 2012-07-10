@@ -110,7 +110,7 @@ func GenerateSpriteSheet(images []Image) (sheet draw.Image, sprites []Sprite) {
 func GenerateScssVariables(folder string, sheetName string, sheetImg image.Image, sprites []Sprite) string {
 	variables := make([]string, 0, len(sprites) + 2)
 
-	sheetUrl := fmt.Sprintf("$%s-url: image-url(\"%s.png\");\n", sheetName, filepath.Join(folder, sheetName))
+	sheetUrl := fmt.Sprintf("$%s-url: url(\"%s.png\");\n", sheetName, filepath.Join(folder, sheetName))
 	variables = append(variables, sheetUrl)
 
 	sheetWidth  := fmt.Sprintf("$%s-width: %#vpx;", sheetName, sheetImg.Bounds().Max.X - sheetImg.Bounds().Min.X)
@@ -138,7 +138,7 @@ func GenerateScssVariables(folder string, sheetName string, sheetImg image.Image
 // Generate an array of SCSS mixin definitions.
 const mixinFormat string =
 `@mixin %s-%s() {
-  background: image-url("%s.png") no-repeat %#vpx %#vpx;%s
+  background: url("%s.png") no-repeat %#vpx %#vpx;%s
   width: %#vpx;
   height: %#vpx;
 }
@@ -164,7 +164,7 @@ func GenerateScssMixins(folder string, sheetName string, sheetImg image.Image, s
 // Generate an array of CSS class definitions.
 const classFormat string =
 `.%s-%s {
-  background: image-url("%s.png") no-repeat %#vpx %#vpx;%s
+  background: url("%s.png") no-repeat %#vpx %#vpx;%s
   width: %#vpx;
   height: %#vpx;
 }
