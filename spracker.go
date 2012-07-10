@@ -187,8 +187,8 @@ func GenerateCssClasses(folder string, sheetName string, sheetImg image.Image, s
 	return strings.Join(classes, "\n")
 }
 
-func SpritesModified(folder string) (bool, error) {
-	sheetFileName := folder + ".png"
+func SpritesModified(folder, sheetFileName string) (bool, error) {
+	// sheetFileName := folder + ".png"
 	sheetStat, err := os.Stat(sheetFileName)
 	if err != nil {
 		return true, nil // basically checking to see if the spritesheet exists
@@ -245,7 +245,7 @@ func GenerateSpriteSheetsFromFolders(superFolder string, outputFolder string, ch
 	var anyErrors error = nil
 	for _, folder := range folders {
 		if checkTimeStamps {
-			modified, err := SpritesModified(filepath.Join(superFolder, folder))
+			modified, err := SpritesModified(filepath.Join(superFolder, folder), filepath.Join(outputFolder, folder + ".png"))
 			if err != nil {
 				anyErrors = err
 				continue
