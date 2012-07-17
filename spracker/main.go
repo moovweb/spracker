@@ -1,8 +1,9 @@
 package main
 
 import (
+	"flag"
 	// "fmt"
-	"os"
+	// "os"
 )
 
 import (
@@ -11,32 +12,27 @@ import (
 )
 
 func main() {
-	imagePath := "."
-	stylePath := "."
-	if len(os.Args) > 1 {
-		imagePath = os.Args[1]
-	}
-	if len(os.Args) > 2 {
-		stylePath = os.Args[2]
-	}
-	log := golog.NewLogger("sprite")
 
-	// images, _ := spracker.ReadImageFolder(path, log)
-	// sheet, sprites := spracker.GenerateSpriteSheet(images)
+	var (
+		generateScss       bool
+		spritesFolder      string
+		spriteSheetsFolder string
+		styleSheetsFolder  string
+	)
 
-	// // println("Read", len(images), "image files. Sprite layout:")
-	// // for i, img := range images {
-	// // 	s := sprites[i]
-	// // 	fmt.Printf("%s: (%d,%d)\t-\t(%d,%d)\n", img.Name, s.Min.X, s.Min.Y, s.Max.X, s.Max.Y)
-	// // }
-	// spracker.WriteSpriteSheet(sheet, "", path, log)
+	flag.BoolVar(&generateScss, "scss", true, "generate Sass/SCSS variables and mixins")
+	flag.StringVar(&spritesFolder, "sprites-folder", ".", "folder containing subfolders with sprite images")
+	flag.StringVar(&spriteSheetsFolder, "spritesheets-folder", ".", "output folder in which to deposit the sprite-sheets")
+	flag.StringVar(&styleSheetsFolder, "stylesheets-folder", ".", "output folder in which to deposit the stylesheets")
 
-	// println(spracker.GenerateScssVariables(path, sheet, sprites))
-	// println(spracker.GenerateScssMixins(path, sprites))
+	flag.Parse()
 
-	sheets, styles, _ := spracker.GenerateSpriteSheetsFromFolders(imagePath, imagePath, true, log)
+	log := golog.NewLogger("spracker")
+
+	sheets, styles, _ := spracker.GenerateSpriteSheetsFromFolders(spritesFolder, spriteSheetsFolder, true, log)
 	for i, sheet := range sheets {
-		spracker.WriteSpriteSheet(sheet.Image, imagePath, sheet.Name, log)
-		spracker.WriteStyleSheet(styles[i], stylePath, sheet.Name, log)
+		spracker.WriteSpriteSheet(sheet.Image, spriteSheetsFolder, sheet.Name, log)
+		spracker.WriteStyleSheet(styles[i], styleSheetsFolder, sheet.Name, log)
 	}
+
 }
