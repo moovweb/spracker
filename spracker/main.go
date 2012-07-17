@@ -23,7 +23,7 @@ func main() {
 
 	flag.BoolVar(&generateScss, "scss", true, "generate Sass/SCSS variables and mixins")
 	flag.BoolVar(&checkTimestamps, "check-timestamps", true, "don't regenerate sprite-sheets if they're newer than their component sprite images")
-	flag.StringVar(&spritesFolder, "sprites-folder", ".", "folder containing subfolders with sprite images")
+	flag.StringVar(&spritesFolder, "sprites-folder", ".", "input folder containing subfolders with sprite images")
 	flag.StringVar(&spriteSheetsFolder, "spritesheets-folder", ".", "output folder in which to deposit the sprite-sheets")
 	flag.StringVar(&styleSheetsFolder, "stylesheets-folder", ".", "output folder in which to deposit the stylesheets")
 
