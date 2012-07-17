@@ -29,10 +29,17 @@ func main() {
 
 	log := golog.NewLogger("spracker")
 
-	sheets, styles, _ := spracker.GenerateSpriteSheetsFromFolders(spritesFolder, spriteSheetsFolder, true, log)
+	var stylesheetExtension string;
+	if (generateScss) {
+		stylesheetExtension = ".scss"
+	} else {
+		stylesheetExtension = ".css"
+	}
+
+	sheets, styles, _ := spracker.GenerateSpriteSheetsFromFolders(spritesFolder, spriteSheetsFolder, generateScss, true, log)
 	for i, sheet := range sheets {
 		spracker.WriteSpriteSheet(sheet.Image, spriteSheetsFolder, sheet.Name, log)
-		spracker.WriteStyleSheet(styles[i], styleSheetsFolder, sheet.Name, log)
+		spracker.WriteStyleSheet(styles[i], styleSheetsFolder, sheet.Name + stylesheetExtension, log)
 	}
 
 }

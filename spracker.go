@@ -226,7 +226,7 @@ func SpritesModified(folder, sheetFileName string) (bool, error) {
 
 // Read a folder containing subfolders which contain sprites, and generate a
 // spritesheet for each subfolder.
-func GenerateSpriteSheetsFromFolders(superFolder string, outputFolder string, checkTimeStamps bool, log *golog.Logger) (spriteSheets []Image, styleSheets []string, err error) {
+func GenerateSpriteSheetsFromFolders(superFolder, outputFolder string, generateScss, checkTimeStamps bool, log *golog.Logger) (spriteSheets []Image, styleSheets []string, err error) {
 	container, err := os.Open(superFolder)
 	if err != nil {
 		log.Warning("Error opening folder %s containing sprite subfolders", superFolder)
@@ -264,7 +264,11 @@ func GenerateSpriteSheetsFromFolders(superFolder string, outputFolder string, ch
 		mixins  := GenerateScssMixins(outputFolder, folder, sheet, sprites)
 		classes := GenerateCssClasses(outputFolder, folder, sheet, sprites)
 		spriteSheets = append(spriteSheets, Image{folder, sheet})
-		styleSheets  = append(styleSheets, fmt.Sprintf("%s\n%s\n%s", vars, mixins, classes))
+		if (generateScss) {
+			styleSheets = append(styleSheets, fmt.Sprintf("%s\n%s\n%s", vars, mixins, classes))
+		} else {
+			styleSheets = append(styleSheets, classes + "\n")
+		}
 	}
 	err = anyErrors
 
@@ -313,8 +317,8 @@ func WriteSpriteSheet(img image.Image, folder string, name string, log *golog.Lo
 }
 
 // Write a stylesheet string to a file.
-func WriteStyleSheet(style string, folder string, name string, log *golog.Logger) (err error) {
-	fullname := filepath.Join(folder, name + ".scss")
+func WriteStyleSheet(style string, folder string, baseName string, log *golog.Logger) (err error) {
+	fullname := filepath.Join(folder, baseName)
 	os.Remove(fullname)
 	outFile, err := os.Create(fullname)
 	if err != nil {
