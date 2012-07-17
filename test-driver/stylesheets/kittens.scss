@@ -1,0 +1,72 @@
+$kittens-url: url("images/spritesheets/kittens.png");
+
+$kittens-width: 1024px;
+$kittens-height: 1754px;
+
+$kittens-k01-x: 0px;
+$kittens-k01-y: 0px;
+$kittens-k01-width: 482px;
+$kittens-k01-height: 327px;
+
+$kittens-k02-x: 0px;
+$kittens-k02-y: -327px;
+$kittens-k02-width: 450px;
+$kittens-k02-height: 302px;
+
+$kittens-k03-x: 0px;
+$kittens-k03-y: -629px;
+$kittens-k03-width: 1024px;
+$kittens-k03-height: 768px;
+
+$kittens-k04-x: 0px;
+$kittens-k04-y: -1397px;
+$kittens-k04-width: 659px;
+$kittens-k04-height: 357px;
+
+@mixin kittens-k01() {
+  background: url("images/spritesheets/kittens.png") no-repeat 0px 0px;
+  width: 482px;
+  height: 327px;
+}
+
+@mixin kittens-k02() {
+  background: url("images/spritesheets/kittens.png") no-repeat 0px -327px;
+  width: 450px;
+  height: 302px;
+}
+
+@mixin kittens-k03() {
+  background: url("images/spritesheets/kittens.png") no-repeat 0px -629px;
+  width: 1024px;
+  height: 768px;
+}
+
+@mixin kittens-k04() {
+  background: url("images/spritesheets/kittens.png") no-repeat 0px -1397px;
+  width: 659px;
+  height: 357px;
+}
+
+.kittens-k01 {
+  background: url("images/spritesheets/kittens.png") no-repeat 0px 0px;
+  width: 482px;
+  height: 327px;
+}
+
+.kittens-k02 {
+  background: url("images/spritesheets/kittens.png") no-repeat 0px -327px;
+  width: 450px;
+  height: 302px;
+}
+
+.kittens-k03 {
+  background: url("images/spritesheets/kittens.png") no-repeat 0px -629px;
+  width: 1024px;
+  height: 768px;
+}
+
+.kittens-k04 {
+  background: url("images/spritesheets/kittens.png") no-repeat 0px -1397px;
+  width: 659px;
+  height: 357px;
+}

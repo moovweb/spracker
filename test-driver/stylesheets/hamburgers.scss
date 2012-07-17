@@ -1,0 +1,110 @@
+$hamburgers-url: url("images/spritesheets/hamburgers.png");
+
+$hamburgers-width: 1270px;
+$hamburgers-height: 2895px;
+
+$hamburgers-h01-x: 0px;
+$hamburgers-h01-y: 0px;
+$hamburgers-h01-width: 431px;
+$hamburgers-h01-height: 359px;
+
+$hamburgers-h02-x: 0px;
+$hamburgers-h02-y: -143.6px;
+$hamburgers-h02-width: 172px;
+$hamburgers-h02-height: 118px;
+
+$hamburgers-h03-x: 0px;
+$hamburgers-h03-y: -654px;
+$hamburgers-h03-width: 400px;
+$hamburgers-h03-height: 300px;
+
+$hamburgers-h04-x: 0px;
+$hamburgers-h04-y: -954px;
+$hamburgers-h04-width: 500px;
+$hamburgers-h04-height: 375px;
+
+$hamburgers-h05-x: 0px;
+$hamburgers-h05-y: -664.5px;
+$hamburgers-h05-width: 300px;
+$hamburgers-h05-height: 193px;
+
+$hamburgers-h06-x: 0px;
+$hamburgers-h06-y: -1715px;
+$hamburgers-h06-width: 1270px;
+$hamburgers-h06-height: 1180px;
+
+@mixin hamburgers-h01() {
+  background: url("images/spritesheets/hamburgers.png") no-repeat 0px 0px;
+  width: 431px;
+  height: 359px;
+}
+
+@mixin hamburgers-h02() {
+  background: url("images/spritesheets/hamburgers.png") no-repeat 0px -143.6px;
+  @include background-size(508px 1158px);
+  width: 172px;
+  height: 118px;
+}
+
+@mixin hamburgers-h03() {
+  background: url("images/spritesheets/hamburgers.png") no-repeat 0px -654px;
+  width: 400px;
+  height: 300px;
+}
+
+@mixin hamburgers-h04() {
+  background: url("images/spritesheets/hamburgers.png") no-repeat 0px -954px;
+  width: 500px;
+  height: 375px;
+}
+
+@mixin hamburgers-h05() {
+  background: url("images/spritesheets/hamburgers.png") no-repeat 0px -664.5px;
+  @include background-size(635px 1447.5px);
+  width: 300px;
+  height: 193px;
+}
+
+@mixin hamburgers-h06() {
+  background: url("images/spritesheets/hamburgers.png") no-repeat 0px -1715px;
+  width: 1270px;
+  height: 1180px;
+}
+
+.hamburgers-h01 {
+  background: url("images/spritesheets/hamburgers.png") no-repeat 0px 0px;
+  width: 431px;
+  height: 359px;
+}
+
+.hamburgers-h02 {
+  background: url("images/spritesheets/hamburgers.png") no-repeat 0px -143.6px;
+  @include background-size(508px 1158px);
+  width: 172px;
+  height: 118px;
+}
+
+.hamburgers-h03 {
+  background: url("images/spritesheets/hamburgers.png") no-repeat 0px -654px;
+  width: 400px;
+  height: 300px;
+}
+
+.hamburgers-h04 {
+  background: url("images/spritesheets/hamburgers.png") no-repeat 0px -954px;
+  width: 500px;
+  height: 375px;
+}
+
+.hamburgers-h05 {
+  background: url("images/spritesheets/hamburgers.png") no-repeat 0px -664.5px;
+  @include background-size(635px 1447.5px);
+  width: 300px;
+  height: 193px;
+}
+
+.hamburgers-h06 {
+  background: url("images/spritesheets/hamburgers.png") no-repeat 0px -1715px;
+  width: 1270px;
+  height: 1180px;
+}
