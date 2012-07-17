@@ -15,12 +15,14 @@ func main() {
 
 	var (
 		generateScss       bool
+		checkTimestamps    bool
 		spritesFolder      string
 		spriteSheetsFolder string
 		styleSheetsFolder  string
 	)
 
 	flag.BoolVar(&generateScss, "scss", true, "generate Sass/SCSS variables and mixins")
+	flag.BoolVar(&checkTimestamps, "check-timestamps", true, "don't regenerate sprite-sheets if they're newer than their component sprite images")
 	flag.StringVar(&spritesFolder, "sprites-folder", ".", "folder containing subfolders with sprite images")
 	flag.StringVar(&spriteSheetsFolder, "spritesheets-folder", ".", "output folder in which to deposit the sprite-sheets")
 	flag.StringVar(&styleSheetsFolder, "stylesheets-folder", ".", "output folder in which to deposit the stylesheets")
@@ -37,7 +39,7 @@ func main() {
 		stylesheetExtension = ".css"
 	}
 
-	sheets, styles, gErr := spracker.GenerateSpriteSheetsFromFolders(spritesFolder, spriteSheetsFolder, generateScss, true, log)
+	sheets, styles, gErr := spracker.GenerateSpriteSheetsFromFolders(spritesFolder, spriteSheetsFolder, generateScss, checkTimestamps, log)
 	var wErr error
 	for i, sheet := range sheets {
 		wspErr := spracker.WriteSpriteSheet(sheet.Image, spriteSheetsFolder, sheet.Name, log)
