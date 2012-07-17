@@ -27,7 +27,8 @@ func main() {
 
 	flag.Parse()
 
-	log := golog.NewLogger("spracker")
+	log := golog.NewLogger("")
+	log.AddProcessor("first", golog.NewConsoleProcessor(golog.LOG_INFO, true))
 
 	var stylesheetExtension string;
 	if (generateScss) {
@@ -36,10 +37,18 @@ func main() {
 		stylesheetExtension = ".css"
 	}
 
-	sheets, styles, _ := spracker.GenerateSpriteSheetsFromFolders(spritesFolder, spriteSheetsFolder, generateScss, true, log)
+	sheets, styles, gErr := spracker.GenerateSpriteSheetsFromFolders(spritesFolder, spriteSheetsFolder, generateScss, true, log)
+	var wErr error
 	for i, sheet := range sheets {
-		spracker.WriteSpriteSheet(sheet.Image, spriteSheetsFolder, sheet.Name, log)
-		spracker.WriteStyleSheet(styles[i], styleSheetsFolder, sheet.Name + stylesheetExtension, log)
+		wspErr := spracker.WriteSpriteSheet(sheet.Image, spriteSheetsFolder, sheet.Name, log)
+		wstErr := spracker.WriteStyleSheet(styles[i], styleSheetsFolder, sheet.Name + stylesheetExtension, log)
+		if wspErr != nil || wstErr != nil {
+			wErr = wstErr
+		}
+	}
+
+	if gErr != nil || wErr != nil {
+		golog.FlushLogsAndDie()
 	}
 
 }
