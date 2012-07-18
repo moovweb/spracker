@@ -1,8 +1,8 @@
 package main
 
 import (
-	"path/filepath"
 	"flag"
+	"path/filepath"
 	// "fmt"
 	// "os"
 )
@@ -33,8 +33,8 @@ func main() {
 	log := golog.NewLogger("")
 	log.AddProcessor("first", golog.NewConsoleProcessor(golog.LOG_INFO, true))
 
-	var stylesheetExtension string;
-	if (generateScss) {
+	var stylesheetExtension string
+	if generateScss {
 		stylesheetExtension = ".scss"
 	} else {
 		stylesheetExtension = ".css"
@@ -46,7 +46,7 @@ func main() {
 		if wstErr == nil {
 			log.Info("Generated sprite-sheet '%s.png'", filepath.Join(spriteSheetsFolder, sheet.Name))
 		}
-		wspErr := spracker.WriteStyleSheet(styles[i], styleSheetsFolder, sheet.Name + stylesheetExtension, log)
+		wspErr := spracker.WriteStyleSheet(styles[i], styleSheetsFolder, sheet.Name+stylesheetExtension, log)
 		if wspErr == nil {
 			log.Info("Generated stylesheet '%s%s'", filepath.Join(styleSheetsFolder, sheet.Name), stylesheetExtension)
 		}
