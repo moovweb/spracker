@@ -66,14 +66,23 @@ func ReadImageFolder(path string, log *golog.Logger) (images []Image, err error)
 
 	images = make([]Image, 0)
 	for _, name := range names {
-		imgFile, err := os.Open(filepath.Join(path, name))
+		fullname := filepath.Join(path, name)
+		imgFile, err := os.Open(fullname)
 		if err != nil {
-			log.Error("Couldn't open sprite image file '%s'", name)
+			log.Error("Couldn't open sprite image file '%s'", fullname)
+			continue
+		}
+		imgInfo, err := imgFile.Stat()
+		if err != nil {
+			log.Error("Couldn't gather information for '%s'", fullname)
+		}
+		if imgInfo.IsDir() {
+			log.Warning("'%s' is a folder; skipping it", fullname)
 			continue
 		}
 		img, err := png.Decode(imgFile)
 		if err != nil {
-			log.Error("Problem decoding png sprite image in '%s'", name)
+			log.Error("Problem decoding png sprite image in '%s'", fullname)
 			continue
 		}
 		imgFile.Close()
@@ -243,6 +252,16 @@ func SpritesModified(folder, sheetFileName string) (bool, error) {
 // spritesheet for each subfolder.
 func GenerateSpriteSheetsFromFolders(superFolder, outputFolder string, generateScss, checkTimeStamps bool, log *golog.Logger) (spriteSheets []Image, styleSheets []string, err error) {
 	container, err := os.Open(superFolder)
+	containerInfo, err := container.Stat()
+	if err != nil {
+		log.Error("Couldn't gather information for '%s'", superFolder)
+		return nil, nil, err
+	}
+	if !containerInfo.IsDir() {
+		println("hey")
+		log.Error("'%s' must be a folder", superFolder)
+		return nil, nil, err
+	}
 	if err != nil {
 		log.Error("Couldn't open folder '%s' containing sprite subfolders", superFolder)
 		return nil, nil, err
@@ -286,6 +305,8 @@ func GenerateSpriteSheetsFromFolders(superFolder, outputFolder string, generateS
 			} else {
 				styleSheets = append(styleSheets, classes + "\n")
 			}
+		} else {
+			log.Warning("'%s' contains no images; no sprite-sheet generated", filepath.Join(superFolder, folder))
 		}
 	}
 	err = anyErrors
