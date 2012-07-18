@@ -93,6 +93,10 @@ func ReadImageFolder(path string, log *golog.Logger) (images []Image, err error)
 		images = append(images, Image{name, img})
 	}
 
+	if len(images) == 0 {
+		log.Warning("'%s' contains no images; no sprite-sheet will be generated", path)
+	}
+
 	return images, nil
 }
 
@@ -293,8 +297,7 @@ func GenerateSpriteSheetsFromFolders(superFolder, outputFolder string, generateS
 		if err != nil {
 			anyErrors = err
 			continue
-		}
-		if len(images) > 0 {
+		} else if len(images) > 0 {
 			sheet, sprites := GenerateSpriteSheet(images)
 			vars    := GenerateScssVariables(outputFolder, folder, sheet, sprites)
 			mixins  := GenerateScssMixins(outputFolder, folder, sheet, sprites)
@@ -305,9 +308,10 @@ func GenerateSpriteSheetsFromFolders(superFolder, outputFolder string, generateS
 			} else {
 				styleSheets = append(styleSheets, classes + "\n")
 			}
-		} else {
-			log.Warning("'%s' contains no images; no sprite-sheet generated", filepath.Join(superFolder, folder))
 		}
+		// else {
+		// 	log.Warning("'%s' contains no images; no sprite-sheet generated", filepath.Join(superFolder, folder))
+		// }
 	}
 	err = anyErrors
 
