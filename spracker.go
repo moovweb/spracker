@@ -344,16 +344,29 @@ func IsMagnified(name string) (isIt bool, baseName string, factor float32) {
 
 // Write the spritesheet image to a file.
 func WriteSpriteSheet(img image.Image, folder string, name string, log *golog.Logger) (err error) {
+	dir, err := os.Open(folder)
+	if err != nil {
+		err = os.MkdirAll(folder, 0775)
+		if err != nil {
+			log.Error("Unable to create sprite-sheet output folder '%s'", folder)
+			return err
+		} else {
+			log.Info("Created sprite-sheet output folder '%s'", folder)
+		}
+	} else {
+		dir.Close()
+	}
+
 	fullname := filepath.Join(folder, name + ".png")
 	os.Remove(fullname)
 	outFile, err := os.Create(fullname)
 	if err != nil {
-		log.Error("Couldn't create spritesheet output file '%s'", fullname)
+		log.Error("Couldn't create sprite-sheet output file '%s'", fullname)
 		return err
 	}
 	err = png.Encode(outFile, img)
 	if err != nil {
-		log.Warning("Problem writing spritesheet to '%s'", fullname)
+		log.Warning("Problem writing sprite-sheet to '%s'", fullname)
 		return err
 	}
 	outFile.Close()
@@ -362,6 +375,19 @@ func WriteSpriteSheet(img image.Image, folder string, name string, log *golog.Lo
 
 // Write a stylesheet string to a file.
 func WriteStyleSheet(style string, folder string, baseName string, log *golog.Logger) (err error) {
+	dir, err := os.Open(folder)
+	if err != nil {
+		err = os.MkdirAll(folder, 0775)
+		if err != nil {
+			log.Error("Unable to create stylesheet output folder '%s'", folder)
+			return err
+		} else {
+			log.Info("Created stylesheet output folder '%s'", folder)
+		}
+	} else {
+		dir.Close()
+	}
+
 	fullname := filepath.Join(folder, baseName)
 	os.Remove(fullname)
 	outFile, err := os.Create(fullname)

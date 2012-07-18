@@ -1,6 +1,7 @@
 package main
 
 import (
+	"path/filepath"
 	"flag"
 	// "fmt"
 	// "os"
@@ -40,16 +41,16 @@ func main() {
 	}
 
 	sheets, styles, _ := spracker.GenerateSpriteSheetsFromFolders(spritesFolder, spriteSheetsFolder, generateScss, checkTimestamps, log)
-	// var wErr error
 	for i, sheet := range sheets {
-		spracker.WriteSpriteSheet(sheet.Image, spriteSheetsFolder, sheet.Name, log)
-		spracker.WriteStyleSheet(styles[i], styleSheetsFolder, sheet.Name + stylesheetExtension, log)
-		// if wspErr != nil || wstErr != nil {
-		// 	wErr = wstErr
-		// }
+		wstErr := spracker.WriteSpriteSheet(sheet.Image, spriteSheetsFolder, sheet.Name, log)
+		if wstErr == nil {
+			log.Info("Generated sprite-sheet '%s.png'", filepath.Join(spriteSheetsFolder, sheet.Name))
+		}
+		wspErr := spracker.WriteStyleSheet(styles[i], styleSheetsFolder, sheet.Name + stylesheetExtension, log)
+		if wspErr == nil {
+			log.Info("Generated stylesheet '%s%s'", filepath.Join(styleSheetsFolder, sheet.Name), stylesheetExtension)
+		}
 	}
 
-			golog.FlushLogsAndDie()
-
-
+	golog.FlushLogsAndDie()
 }
