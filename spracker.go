@@ -44,6 +44,16 @@ func ReadImageFolder(path string, log *golog.Logger) (images []Image, err error)
 		log.Error("Couldn't open sprite folder '%s'", path)
 		return nil, err
 	}
+	dirInfo, err := dir.Stat()
+	if err != nil {
+		log.Error("Couldn't gather information for '%s'", path)
+		return nil, err
+	}
+	if !dirInfo.IsDir() {
+		log.Warning("'%s' is not a folder; skipping it", path)
+		return nil, nil
+	}
+
 	names, err := dir.Readdirnames(0)
 	dir.Close()
 	if err != nil {
@@ -67,6 +77,7 @@ func ReadImageFolder(path string, log *golog.Logger) (images []Image, err error)
 			continue
 		}
 		imgFile.Close()
+		// TO DO: use filepath.Extension
 		if strings.HasSuffix(name, ".png") {
 			name = name[0 : len(name)-4]
 		}
@@ -191,7 +202,11 @@ func SpritesModified(folder, sheetFileName string) (bool, error) {
 	// sheetFileName := folder + ".png"
 	sheetStat, err := os.Stat(sheetFileName)
 	if err != nil {
-		return true, nil // basically checking to see if the spritesheet exists
+		if os.IsNotExist(err) {
+			return true, nil
+		} else {
+			return false, err
+		}
 	}
 	sheetModTime := sheetStat.ModTime()
 	folderStat, err := os.Stat(folder)
@@ -247,6 +262,7 @@ func GenerateSpriteSheetsFromFolders(superFolder, outputFolder string, generateS
 		if checkTimeStamps {
 			modified, err := SpritesModified(filepath.Join(superFolder, folder), filepath.Join(outputFolder, folder + ".png"))
 			if err != nil {
+				log.Error(fmt.Sprintf("problem checking timestamps of '%s' and '%s.png'", folder, folder))
 				anyErrors = err
 				continue
 			}
@@ -259,15 +275,17 @@ func GenerateSpriteSheetsFromFolders(superFolder, outputFolder string, generateS
 			anyErrors = err
 			continue
 		}
-		sheet, sprites := GenerateSpriteSheet(images)
-		vars    := GenerateScssVariables(outputFolder, folder, sheet, sprites)
-		mixins  := GenerateScssMixins(outputFolder, folder, sheet, sprites)
-		classes := GenerateCssClasses(outputFolder, folder, sheet, sprites)
-		spriteSheets = append(spriteSheets, Image{folder, sheet})
-		if (generateScss) {
-			styleSheets = append(styleSheets, fmt.Sprintf("%s\n%s\n%s", vars, mixins, classes))
-		} else {
-			styleSheets = append(styleSheets, classes + "\n")
+		if len(images) > 0 {
+			sheet, sprites := GenerateSpriteSheet(images)
+			vars    := GenerateScssVariables(outputFolder, folder, sheet, sprites)
+			mixins  := GenerateScssMixins(outputFolder, folder, sheet, sprites)
+			classes := GenerateCssClasses(outputFolder, folder, sheet, sprites)
+			spriteSheets = append(spriteSheets, Image{folder, sheet})
+			if (generateScss) {
+				styleSheets = append(styleSheets, fmt.Sprintf("%s\n%s\n%s", vars, mixins, classes))
+			} else {
+				styleSheets = append(styleSheets, classes + "\n")
+			}
 		}
 	}
 	err = anyErrors
