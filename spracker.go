@@ -290,6 +290,7 @@ func GenerateSpriteSheetsFromFolders(superFolder, outputFolder string, generateS
 				continue
 			}
 			if !modified {
+				log.Info("no sprites have been added or modified since '%s.png' was generated; skipping generation", folder)
 				continue
 			}
 		}
