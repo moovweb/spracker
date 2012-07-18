@@ -39,18 +39,17 @@ func main() {
 		stylesheetExtension = ".css"
 	}
 
-	sheets, styles, gErr := spracker.GenerateSpriteSheetsFromFolders(spritesFolder, spriteSheetsFolder, generateScss, checkTimestamps, log)
-	var wErr error
+	sheets, styles, _ := spracker.GenerateSpriteSheetsFromFolders(spritesFolder, spriteSheetsFolder, generateScss, checkTimestamps, log)
+	// var wErr error
 	for i, sheet := range sheets {
-		wspErr := spracker.WriteSpriteSheet(sheet.Image, spriteSheetsFolder, sheet.Name, log)
-		wstErr := spracker.WriteStyleSheet(styles[i], styleSheetsFolder, sheet.Name + stylesheetExtension, log)
-		if wspErr != nil || wstErr != nil {
-			wErr = wstErr
-		}
+		spracker.WriteSpriteSheet(sheet.Image, spriteSheetsFolder, sheet.Name, log)
+		spracker.WriteStyleSheet(styles[i], styleSheetsFolder, sheet.Name + stylesheetExtension, log)
+		// if wspErr != nil || wstErr != nil {
+		// 	wErr = wstErr
+		// }
 	}
 
-	if gErr != nil || wErr != nil {
-		golog.FlushLogsAndDie()
-	}
+			golog.FlushLogsAndDie()
+
 
 }
