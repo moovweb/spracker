@@ -255,6 +255,10 @@ func SpritesModified(folder, sheetFileName string) (bool, error) {
 // spritesheet for each subfolder.
 func GenerateSpriteSheetsFromFolders(superFolder, outputFolder string, generateScss, checkTimeStamps bool, log *golog.Logger) (spriteSheets []Image, styleSheets []string, err error) {
 	container, err := os.Open(superFolder)
+	if err != nil && os.IsNotExist(err) {
+		log.Info("Specified sprite folder '%s' does not exist; not generating anything", superFolder)
+		return nil, nil, err
+	}
 	containerInfo, err := container.Stat()
 	if err != nil {
 		log.Error("Couldn't gather information for '%s'", superFolder)
@@ -284,7 +288,7 @@ func GenerateSpriteSheetsFromFolders(superFolder, outputFolder string, generateS
 		if checkTimeStamps {
 			modified, err := SpritesModified(filepath.Join(superFolder, folder), filepath.Join(outputFolder, folder+".png"))
 			if err != nil {
-				log.Error(fmt.Sprintf("problem checking timestamps of '%s' and '%s.png'", folder, folder))
+				log.Error("problem checking timestamps of '%s' and '%s.png'", folder, folder)
 				anyErrors = err
 				continue
 			}
