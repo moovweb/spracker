@@ -253,10 +253,12 @@ func SpritesModified(folder, sheetFileName string) (bool, error) {
 
 // Read a folder containing subfolders which contain sprites, and generate a
 // spritesheet for each subfolder.
-func GenerateSpriteSheetsFromFolders(projectFolder, superFolder, outputFolder string, generateScss, checkTimeStamps bool, log *golog.Logger) (spriteSheets []Image, styleSheets []string, err error) {
-	relOutFolder := outputFolder
-	superFolder = filepath.Join(projectFolder, superFolder)
-	outputFolder = filepath.Join(projectFolder, outputFolder)
+func GenerateSpriteSheetsFromFolders(superFolder, outputFolder, styleFolder string, generateScss, checkTimeStamps bool, log *golog.Logger) (spriteSheets []Image, styleSheets []string, err error) {
+	relOutFolder, err := filepath.Rel(styleFolder, outputFolder)
+
+	if err != nil {
+		relOutFolder = outputFolder
+	}
 
 	container, err := os.Open(superFolder)
 	if err != nil && os.IsNotExist(err) {
