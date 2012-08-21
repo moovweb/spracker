@@ -253,7 +253,11 @@ func SpritesModified(folder, sheetFileName string) (bool, error) {
 
 // Read a folder containing subfolders which contain sprites, and generate a
 // spritesheet for each subfolder.
-func GenerateSpriteSheetsFromFolders(superFolder, outputFolder string, generateScss, checkTimeStamps bool, log *golog.Logger) (spriteSheets []Image, styleSheets []string, err error) {
+func GenerateSpriteSheetsFromFolders(projectFolder, superFolder, outputFolder string, generateScss, checkTimeStamps bool, log *golog.Logger) (spriteSheets []Image, styleSheets []string, err error) {
+	relOutFolder := outputFolder
+	superFolder = filepath.Join(projectFolder, superFolder)
+	outputFolder = filepath.Join(projectFolder, outputFolder)
+
 	container, err := os.Open(superFolder)
 	if err != nil && os.IsNotExist(err) {
 		log.Info("Specified sprite folder '%s' does not exist; not generating anything", superFolder)
@@ -303,9 +307,9 @@ func GenerateSpriteSheetsFromFolders(superFolder, outputFolder string, generateS
 			continue
 		} else if len(images) > 0 {
 			sheet, sprites := GenerateSpriteSheet(images)
-			vars := GenerateScssVariables(outputFolder, folder, sheet, sprites)
-			mixins := GenerateScssMixins(outputFolder, folder, sheet, sprites)
-			classes := GenerateCssClasses(outputFolder, folder, sheet, sprites)
+			vars := GenerateScssVariables(relOutFolder, folder, sheet, sprites)
+			mixins := GenerateScssMixins(relOutFolder, folder, sheet, sprites)
+			classes := GenerateCssClasses(relOutFolder, folder, sheet, sprites)
 			spriteSheets = append(spriteSheets, Image{folder, sheet})
 			if generateScss {
 				styleSheets = append(styleSheets, fmt.Sprintf("%s\n%s\n%s", vars, mixins, classes))
