@@ -133,7 +133,7 @@ func GenerateSpriteSheet(images []Image) (sheet draw.Image, sprites []Sprite) {
 func GenerateScssVariables(folder string, sheetName string, sheetImg image.Image, sprites []Sprite) string {
 	variables := make([]string, 0, len(sprites)+2)
 
-	sheetUrl := fmt.Sprintf("$%s-url: url(\"%s.png\");\n", sheetName, filepath.Join(folder, sheetName))
+	sheetUrl := fmt.Sprintf("$%s-url: url(\"%s.png\");\n", sheetName, folder + "/" + sheetName)
 	variables = append(variables, sheetUrl)
 
 	sheetWidth := fmt.Sprintf("$%s-width: %#vpx;", sheetName, sheetImg.Bounds().Max.X-sheetImg.Bounds().Min.X)
@@ -177,7 +177,7 @@ func GenerateScssMixins(folder string, sheetName string, sheetImg image.Image, s
 		} else {
 			bgSize = fmt.Sprintf("\n  @include background-size(%vpx %vpx);", float32(sheetImg.Bounds().Max.X)/factor, float32(sheetImg.Bounds().Max.Y)/factor)
 		}
-		def := fmt.Sprintf(mixinFormat, sheetName, name, filepath.Join(folder, sheetName), float32(-s.Min.X)/factor, float32(-s.Min.Y)/factor, bgSize, float32(s.Width())/factor, float32(s.Height())/factor)
+		def := fmt.Sprintf(mixinFormat, sheetName, name, folder + "/" + sheetName, float32(-s.Min.X)/factor, float32(-s.Min.Y)/factor, bgSize, float32(s.Width())/factor, float32(s.Height())/factor)
 		mixins = append(mixins, def)
 	}
 
@@ -203,7 +203,7 @@ func GenerateCssClasses(folder string, sheetName string, sheetImg image.Image, s
 		} else {
 			bgSize = fmt.Sprintf("\n  @include background-size(%vpx %vpx);", float32(sheetImg.Bounds().Max.X)/factor, float32(sheetImg.Bounds().Max.Y)/factor)
 		}
-		class := fmt.Sprintf(classFormat, sheetName, name, filepath.Join(folder, sheetName), float32(-s.Min.X)/factor, float32(-s.Min.Y)/factor, bgSize, float32(s.Width())/factor, float32(s.Height())/factor)
+		class := fmt.Sprintf(classFormat, sheetName, name, folder + "/" + sheetName, float32(-s.Min.X)/factor, float32(-s.Min.Y)/factor, bgSize, float32(s.Width())/factor, float32(s.Height())/factor)
 		classes = append(classes, class)
 	}
 
@@ -253,12 +253,7 @@ func SpritesModified(folder, sheetFileName string) (bool, error) {
 
 // Read a folder containing subfolders which contain sprites, and generate a
 // spritesheet for each subfolder.
-func GenerateSpriteSheetsFromFolders(superFolder, outputFolder, styleFolder string, generateScss, checkTimeStamps bool, log *golog.Logger) (spriteSheets []Image, styleSheets []string, err error) {
-	relOutFolder, err := filepath.Rel(styleFolder, outputFolder)
-
-	if err != nil {
-		relOutFolder = outputFolder
-	}
+func GenerateSpriteSheetsFromFolders(superFolder, outputFolder, outputURI string, generateScss, checkTimeStamps bool, log *golog.Logger) (spriteSheets []Image, styleSheets []string, err error) {
 
 	container, err := os.Open(superFolder)
 	if err != nil && os.IsNotExist(err) {
@@ -309,9 +304,9 @@ func GenerateSpriteSheetsFromFolders(superFolder, outputFolder, styleFolder stri
 			continue
 		} else if len(images) > 0 {
 			sheet, sprites := GenerateSpriteSheet(images)
-			vars := GenerateScssVariables(relOutFolder, folder, sheet, sprites)
-			mixins := GenerateScssMixins(relOutFolder, folder, sheet, sprites)
-			classes := GenerateCssClasses(relOutFolder, folder, sheet, sprites)
+			vars := GenerateScssVariables(outputURI, folder, sheet, sprites)
+			mixins := GenerateScssMixins(outputURI, folder, sheet, sprites)
+			classes := GenerateCssClasses(outputURI, folder, sheet, sprites)
 			spriteSheets = append(spriteSheets, Image{folder, sheet})
 			if generateScss {
 				styleSheets = append(styleSheets, fmt.Sprintf("%s\n%s\n%s", vars, mixins, classes))

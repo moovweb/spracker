@@ -42,7 +42,7 @@ func main() {
 		stylesheetExtension = ".css"
 	}
 
-	sheets, styles, _ := spracker.GenerateSpriteSheetsFromFolders(spritesFolder, spriteSheetsFolder, styleSheetsFolder, generateScss, checkTimestamps, log)
+	sheets, styles, _ := spracker.GenerateSpriteSheetsFromFolders(spritesFolder, spriteSheetsFolder, spriteSheetsFolder, generateScss, checkTimestamps, log)
 	for i, sheet := range sheets {
 		wstErr := spracker.WriteSpriteSheet(sheet.Image, spriteSheetsFolder, sheet.Name, log)
 		if wstErr == nil {
