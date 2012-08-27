@@ -50,7 +50,7 @@ func ReadImageFolder(path string, log *golog.Logger) (images []Image, err error)
 		return nil, err
 	}
 	if !dirInfo.IsDir() {
-		log.Warning("'%s' is not a folder; skipping it", path)
+		// log.Warning("'%s' is not a folder; skipping it", path)
 		return nil, nil
 	}
 
@@ -77,7 +77,8 @@ func ReadImageFolder(path string, log *golog.Logger) (images []Image, err error)
 			log.Error("Couldn't gather information for '%s'", fullname)
 		}
 		if imgInfo.IsDir() {
-			log.Warning("'%s' is a folder; skipping it", fullname)
+			// Meh; don't need the warning. Just skip non-files.
+			// log.Warning("'%s' is a folder; skipping it", fullname)
 			continue
 		}
 		img, err := png.Decode(imgFile)
@@ -251,6 +252,62 @@ func SpritesModified(folder, sheetFileName string) (bool, error) {
 	return false, nil
 }
 
+// Read a single folder containing sprites, and generate a single spritesheet
+func GenerateSpriteSheetFromFolder(inputFolder, outputFolder, outputURI string, generateScss, checkTimeStamps bool, log *golog.Logger) (spriteSheet Image, styleSheet string, skipped bool, err error) {
+	sheetName := filepath.Base(inputFolder)
+
+	folder, ferr := os.Open(inputFolder)
+	err = ferr
+	if err != nil && os.IsNotExist(err) {
+		log.Info("Specified sprite folder '%s' does not exist; not generating anything", inputFolder)
+		return
+	}
+	if err != nil {
+		log.Error("Couldn't open folder '%s' containing sprite images", inputFolder)
+		return
+	}
+	folderInfo, ferr := folder.Stat()
+	err = ferr
+	if err != nil {
+		log.Error("Couldn't gather information for '%s'", inputFolder)
+		return
+	}
+	if !folderInfo.IsDir() {
+		log.Error("'%s' must be a folder", inputFolder)
+		return
+	}
+
+	if checkTimeStamps {
+		modified, ferr := SpritesModified(inputFolder, filepath.Join(outputFolder, sheetName+".png"))
+		err = ferr
+		if err != nil {
+			log.Error("problem checking timestamps of '%s' and '%s.png'", inputFolder, sheetName)
+			return
+		}
+		if !modified {
+			log.Info("no sprites have been added or modified since '%s.png' was generated; skipping generation", sheetName)
+			skipped = true
+			return
+		}
+	}
+
+	images, ferr := ReadImageFolder(inputFolder, log)
+	err = ferr
+	if err != nil {
+		log.Error("Problem reading sprite images in '%s'", inputFolder)
+		return
+	} else if len(images) > 0 {
+		sheet, sprites := GenerateSpriteSheet(images)
+		spriteSheet = Image{sheetName, sheet}
+		vars := GenerateScssVariables(outputURI, sheetName, spriteSheet, sprites)
+		mixins := GenerateScssMixins(outputURI, sheetName, spriteSheet, sprites)
+		classes := GenerateCssClasses(outputURI, sheetName, spriteSheet, sprites)
+		styleSheet = fmt.Sprintf("%s\n%s\n%s", vars, mixins, classes)
+		return
+	}
+	return
+}
+
 // Read a folder containing subfolders which contain sprites, and generate a
 // spritesheet for each subfolder.
 func GenerateSpriteSheetsFromFolders(superFolder, outputFolder, outputURI string, generateScss, checkTimeStamps bool, log *golog.Logger) (spriteSheets []Image, styleSheets []string, err error) {
@@ -260,18 +317,17 @@ func GenerateSpriteSheetsFromFolders(superFolder, outputFolder, outputURI string
 		log.Info("Specified sprite folder '%s' does not exist; not generating anything", superFolder)
 		return nil, nil, err
 	}
+	if err != nil {
+		log.Error("Couldn't open folder '%s' containing sprite subfolders", superFolder)
+		return nil, nil, err
+	}
 	containerInfo, err := container.Stat()
 	if err != nil {
 		log.Error("Couldn't gather information for '%s'", superFolder)
 		return nil, nil, err
 	}
 	if !containerInfo.IsDir() {
-		println("hey")
 		log.Error("'%s' must be a folder", superFolder)
-		return nil, nil, err
-	}
-	if err != nil {
-		log.Error("Couldn't open folder '%s' containing sprite subfolders", superFolder)
 		return nil, nil, err
 	}
 	folders, err := container.Readdirnames(0)
