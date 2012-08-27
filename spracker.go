@@ -304,6 +304,9 @@ func GenerateSpriteSheetFromFolder(inputFolder, outputFolder, outputURI string, 
 		classes := GenerateCssClasses(outputURI, sheetName, spriteSheet, sprites)
 		styleSheet = fmt.Sprintf("%s\n%s\n%s", vars, mixins, classes)
 		return
+	} else {
+		skipped = true
+		return
 	}
 	return
 }
