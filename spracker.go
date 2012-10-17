@@ -40,6 +40,7 @@ func (s *Sprite) Height() int {
 // Take a folder name, read all the images within, and return them in an array.
 func ReadImageFolder(path string, log *golog.Logger) (images []Image, err error) {
 	dir, err := os.Open(path)
+	defer dir.Close()
 	if err != nil {
 		log.Error("Couldn't open sprite folder '%s'", path)
 		return nil, err
@@ -55,7 +56,6 @@ func ReadImageFolder(path string, log *golog.Logger) (images []Image, err error)
 	}
 
 	names, err := dir.Readdirnames(0)
-	dir.Close()
 	if err != nil {
 		log.Error("Problem gathering names of sprite files in '%s'", path)
 		return nil, err
@@ -68,6 +68,7 @@ func ReadImageFolder(path string, log *golog.Logger) (images []Image, err error)
 	for _, name := range names {
 		fullname := filepath.Join(path, name)
 		imgFile, err := os.Open(fullname)
+		defer imgFile.Close()
 		if err != nil {
 			log.Error("Couldn't open sprite image file '%s'", fullname)
 			continue
@@ -86,7 +87,6 @@ func ReadImageFolder(path string, log *golog.Logger) (images []Image, err error)
 			log.Error("Problem decoding png sprite image in '%s'", fullname)
 			continue
 		}
-		imgFile.Close()
 		if filepath.Ext(name) == ".png" {
 			name = name[0 : len(name)-4]
 		}
@@ -231,6 +231,7 @@ func SpritesModified(folder, sheetFileName string) (bool, error) {
 		return true, nil
 	}
 	dir, err := os.Open(folder)
+	defer dir.Close()
 	if err != nil {
 		return false, err
 	}
@@ -257,6 +258,7 @@ func GenerateSpriteSheetFromFolder(inputFolder, outputFolder, outputURI string, 
 	sheetName := filepath.Base(inputFolder)
 
 	folder, ferr := os.Open(inputFolder)
+	defer folder.Close()
 	err = ferr
 	if err != nil && os.IsNotExist(err) {
 		log.Info("Specified sprite folder '%s' does not exist; not generating anything", inputFolder)
@@ -316,6 +318,7 @@ func GenerateSpriteSheetFromFolder(inputFolder, outputFolder, outputURI string, 
 func GenerateSpriteSheetsFromFolders(superFolder, outputFolder, outputURI string, generateScss, checkTimeStamps bool, log *golog.Logger) (spriteSheets []Image, styleSheets []string, err error) {
 
 	container, err := os.Open(superFolder)
+	defer container.Close()
 	if err != nil && os.IsNotExist(err) {
 		log.Info("Specified sprite folder '%s' does not exist; not generating anything", superFolder)
 		return nil, nil, err
@@ -334,7 +337,6 @@ func GenerateSpriteSheetsFromFolders(superFolder, outputFolder, outputURI string
 		return nil, nil, err
 	}
 	folders, err := container.Readdirnames(0)
-	container.Close()
 	if err != nil {
 		log.Error("Problem gathering names of sprite subfolders in '%s'", superFolder)
 		return nil, nil, err
@@ -408,6 +410,7 @@ func IsMagnified(name string) (isIt bool, baseName string, factor float32) {
 // Write the spritesheet image to a file.
 func WriteSpriteSheet(img image.Image, folder string, name string, log *golog.Logger) (err error) {
 	dir, err := os.Open(folder)
+	defer dir.Close()
 	if err != nil {
 		err = os.MkdirAll(folder, 0775)
 		if err != nil {
@@ -416,13 +419,12 @@ func WriteSpriteSheet(img image.Image, folder string, name string, log *golog.Lo
 		} else {
 			log.Info("Created sprite-sheet output folder '%s'", folder)
 		}
-	} else {
-		dir.Close()
 	}
 
 	fullname := filepath.Join(folder, name+".png")
 	os.Remove(fullname)
 	outFile, err := os.Create(fullname)
+	defer outFile.Close()
 	if err != nil {
 		log.Error("Couldn't create sprite-sheet output file '%s'", fullname)
 		return err
@@ -432,13 +434,13 @@ func WriteSpriteSheet(img image.Image, folder string, name string, log *golog.Lo
 		log.Warning("Problem writing sprite-sheet to '%s'", fullname)
 		return err
 	}
-	outFile.Close()
 	return nil
 }
 
 // Write a stylesheet string to a file.
 func WriteStyleSheet(style string, folder string, baseName string, log *golog.Logger) (err error) {
 	dir, err := os.Open(folder)
+	defer dir.Close()
 	if err != nil {
 		err = os.MkdirAll(folder, 0775)
 		if err != nil {
@@ -447,13 +449,12 @@ func WriteStyleSheet(style string, folder string, baseName string, log *golog.Lo
 		} else {
 			log.Info("Created stylesheet output folder '%s'", folder)
 		}
-	} else {
-		dir.Close()
 	}
 
 	fullname := filepath.Join(folder, baseName)
 	os.Remove(fullname)
 	outFile, err := os.Create(fullname)
+	defer outFile.Close()
 	if err != nil {
 		log.Error("Couldn't create SCSS output file '%s'", fullname)
 		return err
@@ -463,7 +464,6 @@ func WriteStyleSheet(style string, folder string, baseName string, log *golog.Lo
 		log.Error("Problem writing styles to '%s'", fullname)
 		return err
 	}
-	outFile.Close()
 	return nil
 }
 
