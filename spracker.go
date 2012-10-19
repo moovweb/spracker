@@ -440,7 +440,6 @@ func WriteSpriteSheet(img image.Image, folder string, name string, log *golog.Lo
 // Write a stylesheet string to a file.
 func WriteStyleSheet(style string, folder string, baseName string, log *golog.Logger) (err error) {
 	dir, err := os.Open(folder)
-	defer dir.Close()
 	if err != nil {
 		err = os.MkdirAll(folder, 0775)
 		if err != nil {
@@ -449,6 +448,8 @@ func WriteStyleSheet(style string, folder string, baseName string, log *golog.Lo
 		} else {
 			log.Info("Created stylesheet output folder '%s'", folder)
 		}
+	} else {
+		dir.Close()
 	}
 
 	fullname := filepath.Join(folder, baseName)
