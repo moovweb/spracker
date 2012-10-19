@@ -40,10 +40,11 @@ func (s *Sprite) Height() int {
 // Take a folder name, read all the images within, and return them in an array.
 func ReadImageFolder(path string, log *golog.Logger) (images []Image, err error) {
 	dir, err := os.Open(path)
-	defer dir.Close()
 	if err != nil {
 		log.Error("Couldn't open sprite folder '%s'", path)
 		return nil, err
+	} else {
+		defer dir.Close()
 	}
 	dirInfo, err := dir.Stat()
 	if err != nil {
@@ -68,10 +69,11 @@ func ReadImageFolder(path string, log *golog.Logger) (images []Image, err error)
 	for _, name := range names {
 		fullname := filepath.Join(path, name)
 		imgFile, err := os.Open(fullname)
-		defer imgFile.Close()
 		if err != nil {
 			log.Error("Couldn't open sprite image file '%s'", fullname)
 			continue
+		} else {
+			defer imgFile.Close()
 		}
 		imgInfo, err := imgFile.Stat()
 		if err != nil {
@@ -231,9 +233,10 @@ func SpritesModified(folder, sheetFileName string) (bool, error) {
 		return true, nil
 	}
 	dir, err := os.Open(folder)
-	defer dir.Close()
 	if err != nil {
 		return false, err
+	} else {
+		defer dir.Close()
 	}
 	imageNames, err := dir.Readdirnames(0)
 	if err != nil {
@@ -258,15 +261,15 @@ func GenerateSpriteSheetFromFolder(inputFolder, outputFolder, outputURI string, 
 	sheetName := filepath.Base(inputFolder)
 
 	folder, ferr := os.Open(inputFolder)
-	defer folder.Close()
 	err = ferr
 	if err != nil && os.IsNotExist(err) {
 		log.Info("Specified sprite folder '%s' does not exist; not generating anything", inputFolder)
 		return
-	}
-	if err != nil {
+	} else if err != nil {
 		log.Error("Couldn't open folder '%s' containing sprite images", inputFolder)
 		return
+	} else {
+		defer folder.Close()
 	}
 	folderInfo, ferr := folder.Stat()
 	err = ferr
@@ -318,14 +321,14 @@ func GenerateSpriteSheetFromFolder(inputFolder, outputFolder, outputURI string, 
 func GenerateSpriteSheetsFromFolders(superFolder, outputFolder, outputURI string, generateScss, checkTimeStamps bool, log *golog.Logger) (spriteSheets []Image, styleSheets []string, err error) {
 
 	container, err := os.Open(superFolder)
-	defer container.Close()
 	if err != nil && os.IsNotExist(err) {
 		log.Info("Specified sprite folder '%s' does not exist; not generating anything", superFolder)
 		return nil, nil, err
-	}
-	if err != nil {
+	} else if err != nil {
 		log.Error("Couldn't open folder '%s' containing sprite subfolders", superFolder)
 		return nil, nil, err
+	} else {
+		defer container.Close()
 	}
 	containerInfo, err := container.Stat()
 	if err != nil {
@@ -410,7 +413,6 @@ func IsMagnified(name string) (isIt bool, baseName string, factor float32) {
 // Write the spritesheet image to a file.
 func WriteSpriteSheet(img image.Image, folder string, name string, log *golog.Logger) (err error) {
 	dir, err := os.Open(folder)
-	defer dir.Close()
 	if err != nil {
 		err = os.MkdirAll(folder, 0775)
 		if err != nil {
@@ -419,15 +421,18 @@ func WriteSpriteSheet(img image.Image, folder string, name string, log *golog.Lo
 		} else {
 			log.Info("Created sprite-sheet output folder '%s'", folder)
 		}
+	} else {
+		defer dir.Close()
 	}
 
 	fullname := filepath.Join(folder, name+".png")
 	os.Remove(fullname)
 	outFile, err := os.Create(fullname)
-	defer outFile.Close()
 	if err != nil {
 		log.Error("Couldn't create sprite-sheet output file '%s'", fullname)
 		return err
+	} else {
+		defer outFile.Close()
 	}
 	err = png.Encode(outFile, img)
 	if err != nil {
@@ -449,16 +454,17 @@ func WriteStyleSheet(style string, folder string, baseName string, log *golog.Lo
 			log.Info("Created stylesheet output folder '%s'", folder)
 		}
 	} else {
-		dir.Close()
+		defer dir.Close()
 	}
 
 	fullname := filepath.Join(folder, baseName)
 	os.Remove(fullname)
 	outFile, err := os.Create(fullname)
-	defer outFile.Close()
 	if err != nil {
 		log.Error("Couldn't create SCSS output file '%s'", fullname)
 		return err
+	} else {
+		defer outFile.Close()
 	}
 	_, err = outFile.WriteString(style)
 	if err != nil {
