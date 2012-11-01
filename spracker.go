@@ -84,15 +84,17 @@ func ReadImageFolder(path string, log *golog.Logger) (images []Image, err error)
 			// log.Warning("'%s' is a folder; skipping it", fullname)
 			continue
 		}
-		img, err := png.Decode(imgFile)
-		if err != nil {
-			log.Error("Problem decoding png sprite image in '%s'", fullname)
-			continue
-		}
 		if filepath.Ext(name) == ".png" {
+			img, err := png.Decode(imgFile)
+			if err != nil {
+				log.Error("Problem decoding png sprite image in '%s'", fullname)
+				continue
+			}
 			name = name[0 : len(name)-4]
+			images = append(images, Image{name, img})
+		} else {
+			log.Debug("Ignoring no-png file '%s'", fullname)
 		}
-		images = append(images, Image{name, img})
 	}
 
 	if len(images) == 0 {
