@@ -138,7 +138,7 @@ func GenerateSpriteSheet(images []Image) (sheet draw.Image, sprites []Sprite) {
 func GenerateScssVariables(folder string, sheetName string, sheetImg image.Image, sprites []Sprite) string {
 	variables := make([]string, 0, len(sprites)+2)
 
-	sheetUrl := fmt.Sprintf("$%s-url: url(\"%s.png\");\n", sheetName, folder + "/" + sheetName)
+	sheetUrl := fmt.Sprintf("$%s-url: url(\"%s.png\");\n", sheetName, folder+"/"+sheetName)
 	variables = append(variables, sheetUrl)
 
 	sheetWidth := fmt.Sprintf("$%s-width: %#vpx;", sheetName, sheetImg.Bounds().Max.X-sheetImg.Bounds().Min.X)
@@ -182,7 +182,7 @@ func GenerateScssMixins(folder string, sheetName string, sheetImg image.Image, s
 		} else {
 			bgSize = fmt.Sprintf("\n  @include background-size(%vpx %vpx);", float32(sheetImg.Bounds().Max.X)/factor, float32(sheetImg.Bounds().Max.Y)/factor)
 		}
-		def := fmt.Sprintf(mixinFormat, sheetName, name, folder + "/" + sheetName, float32(-s.Min.X)/factor, float32(-s.Min.Y)/factor, bgSize, float32(s.Width())/factor, float32(s.Height())/factor)
+		def := fmt.Sprintf(mixinFormat, sheetName, name, folder+"/"+sheetName, float32(-s.Min.X)/factor, float32(-s.Min.Y)/factor, bgSize, float32(s.Width())/factor, float32(s.Height())/factor)
 		mixins = append(mixins, def)
 	}
 
@@ -208,7 +208,7 @@ func GenerateCssClasses(folder string, sheetName string, sheetImg image.Image, s
 		} else {
 			bgSize = fmt.Sprintf("\n  @include background-size(%vpx %vpx);", float32(sheetImg.Bounds().Max.X)/factor, float32(sheetImg.Bounds().Max.Y)/factor)
 		}
-		class := fmt.Sprintf(classFormat, sheetName, name, folder + "/" + sheetName, float32(-s.Min.X)/factor, float32(-s.Min.Y)/factor, bgSize, float32(s.Width())/factor, float32(s.Height())/factor)
+		class := fmt.Sprintf(classFormat, sheetName, name, folder+"/"+sheetName, float32(-s.Min.X)/factor, float32(-s.Min.Y)/factor, bgSize, float32(s.Width())/factor, float32(s.Height())/factor)
 		classes = append(classes, class)
 	}
 
