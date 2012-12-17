@@ -15,8 +15,8 @@ import (
 func main() {
 
 	var (
-		generateScss       bool
-		checkTimestamps    bool
+		generateScss    bool
+		checkTimestamps bool
 		// projectFolder      string
 		spritesFolder      string
 		spriteSheetsFolder string
