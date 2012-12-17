@@ -93,7 +93,7 @@ func ReadImageFolder(path string, log *golog.Logger) (images []Image, err error)
 			name = name[0 : len(name)-4]
 			images = append(images, Image{name, img})
 		} else {
-			log.Debug("Ignoring no-png file '%s'", fullname)
+			log.Debug("Ignoring non-png file '%s'", fullname)
 		}
 	}
 
