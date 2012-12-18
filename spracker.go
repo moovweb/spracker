@@ -5,6 +5,7 @@ import (
 	"image"
 	"image/draw"
 	"image/png"
+	"math"
 	"os"
 	"path/filepath"
 	"sort"
@@ -25,6 +26,9 @@ type Image struct {
 // Bundle the name of a sprite image with its viewport into the spritesheet.
 type Sprite struct {
 	Name string
+	MagFactor float32
+	TopPadding int
+	BottomPadding int
 	image.Rectangle
 }
 
@@ -116,8 +120,30 @@ func GenerateSpriteSheet(images []Image) (sheet draw.Image, sprites []Sprite) {
 	// individual sprites
 	for _, img := range images {
 		bounds := img.Bounds()
-		sprites = append(sprites, Sprite{img.Name, image.Rect(0, sheetHeight, bounds.Dx(), sheetHeight+bounds.Dy())})
-		sheetHeight += bounds.Dy()
+
+		_, name, factor := IsMagnified(img.Name)
+		thisTopPadding := int(math.Ceil(float64(factor)))
+		thisBottomPadding := thisTopPadding
+
+		var prevBottomPadding int
+		if len(sprites) == 0 {
+			prevBottomPadding = 0
+			thisTopPadding = 0
+		} else {
+			prevBottomPadding = sprites[len(sprites)-1].BottomPadding
+		}
+
+		thisTopPadding = int(math.Max(float64(thisTopPadding), float64(prevBottomPadding)))
+		println("bottom padding:",thisBottomPadding)
+		newSprite := Sprite{
+			name,
+			factor,
+			thisTopPadding,
+			thisBottomPadding,
+			image.Rect(0, sheetHeight+thisTopPadding, bounds.Dx(), sheetHeight+thisTopPadding+bounds.Dy()),
+		}
+		sprites = append(sprites, newSprite)
+		sheetHeight += bounds.Dy() + thisTopPadding
 		if bounds.Dx() > sheetWidth {
 			sheetWidth = bounds.Dx()
 		}
@@ -147,10 +173,12 @@ func GenerateScssVariables(folder string, sheetName string, sheetImg image.Image
 	variables = append(variables, def)
 
 	for _, s := range sprites {
-		isMag, name, factor := IsMagnified(s.Name)
-		if !isMag {
-			factor = 1
-		}
+		// isMag, name, factor := IsMagnified(s.Name)
+		// if !isMag {
+		// 	factor = 1
+		// }
+		name := s.Name
+		factor := s.MagFactor
 		prefix := fmt.Sprintf("%s-%s", sheetName, name)
 		vX := fmt.Sprintf("$%s-x: %#vpx;", prefix, float32(-s.Min.X)/factor)
 		vY := fmt.Sprintf("$%s-y: %#vpx;", prefix, float32(-s.Min.Y)/factor)
@@ -175,13 +203,18 @@ func GenerateScssMixins(folder string, sheetName string, sheetImg image.Image, s
 	mixins := make([]string, 0, len(sprites))
 
 	for _, s := range sprites {
-		isMag, name, factor := IsMagnified(s.Name)
+		// isMag, name, factor := IsMagnified(s.Name)
+		name := s.Name
+		factor := s.MagFactor
 		bgSize := ""
-		if !isMag {
-			factor = 1
-		} else {
+		if factor != 1 {
 			bgSize = fmt.Sprintf("\n  @include background-size(%vpx %vpx);", float32(sheetImg.Bounds().Max.X)/factor, float32(sheetImg.Bounds().Max.Y)/factor)
 		}
+		// if !isMag {
+		// 	factor = 1
+		// } else {
+		// 	bgSize = fmt.Sprintf("\n  @include background-size(%vpx %vpx);", float32(sheetImg.Bounds().Max.X)/factor, float32(sheetImg.Bounds().Max.Y)/factor)
+		// }
 		def := fmt.Sprintf(mixinFormat, sheetName, name, folder+"/"+sheetName, float32(-s.Min.X)/factor, float32(-s.Min.Y)/factor, bgSize, float32(s.Width())/factor, float32(s.Height())/factor)
 		mixins = append(mixins, def)
 	}
@@ -201,13 +234,18 @@ func GenerateCssClasses(folder string, sheetName string, sheetImg image.Image, s
 	classes := make([]string, 0, len(sprites))
 
 	for _, s := range sprites {
-		isMag, name, factor := IsMagnified(s.Name)
+		// isMag, name, factor := IsMagnified(s.Name)
+		name := s.Name
+		factor := s.MagFactor
 		bgSize := ""
-		if !isMag {
-			factor = 1
-		} else {
+		if factor != 1 {
 			bgSize = fmt.Sprintf("\n  @include background-size(%vpx %vpx);", float32(sheetImg.Bounds().Max.X)/factor, float32(sheetImg.Bounds().Max.Y)/factor)
 		}
+		// if !isMag {
+		// 	factor = 1
+		// } else {
+		// 	bgSize = fmt.Sprintf("\n  @include background-size(%vpx %vpx);", float32(sheetImg.Bounds().Max.X)/factor, float32(sheetImg.Bounds().Max.Y)/factor)
+		// }
 		class := fmt.Sprintf(classFormat, sheetName, name, folder+"/"+sheetName, float32(-s.Min.X)/factor, float32(-s.Min.Y)/factor, bgSize, float32(s.Width())/factor, float32(s.Height())/factor)
 		classes = append(classes, class)
 	}
