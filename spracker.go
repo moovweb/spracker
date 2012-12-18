@@ -134,7 +134,6 @@ func GenerateSpriteSheet(images []Image) (sheet draw.Image, sprites []Sprite) {
 		}
 
 		thisTopPadding = int(math.Max(float64(thisTopPadding), float64(prevBottomPadding)))
-		println("bottom padding:",thisBottomPadding)
 		newSprite := Sprite{
 			name,
 			factor,
