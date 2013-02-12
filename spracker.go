@@ -26,7 +26,7 @@ type Image struct {
 // Bundle the name of a sprite image with its viewport into the spritesheet.
 type Sprite struct {
 	Name string
-	MagFactor float32
+	MagFactor float64
 	TopPadding int
 	BottomPadding int
 	image.Rectangle
@@ -45,24 +45,24 @@ func (s *Sprite) Height() int {
 func ReadImageFolder(path string, log *golog.Logger) (images []Image, err error) {
 	dir, err := os.Open(path)
 	if err != nil {
-		log.Error("Couldn't open sprite folder '%s'", path)
+		log.Error("Couldn't open folder '%s'", path)
 		return nil, err
 	} else {
 		defer dir.Close()
 	}
 	dirInfo, err := dir.Stat()
 	if err != nil {
-		log.Error("Couldn't gather information for '%s'", path)
+		log.Error("Couldn't gather information for folder '%s'", path)
 		return nil, err
 	}
 	if !dirInfo.IsDir() {
-		// log.Warning("'%s' is not a folder; skipping it", path)
+		// just ignore the request if it isn't a folder
 		return nil, nil
 	}
 
 	names, err := dir.Readdirnames(0)
 	if err != nil {
-		log.Error("Problem gathering names of sprite files in '%s'", path)
+		log.Error("Problem gathering names of image files in '%s'", path)
 		return nil, err
 	}
 
@@ -71,41 +71,63 @@ func ReadImageFolder(path string, log *golog.Logger) (images []Image, err error)
 
 	images = make([]Image, 0)
 	for _, name := range names {
-		fullname := filepath.Join(path, name)
-		imgFile, err := os.Open(fullname)
+		fullName := filepath.Join(path, name)
+		imgFile, err := os.Open(fullName)
 		if err != nil {
-			log.Error("Couldn't open sprite image file '%s'", fullname)
+			log.Error("Couldn't open image file '%s'", fullName)
 			continue
 		} else {
 			defer imgFile.Close()
 		}
 		imgInfo, err := imgFile.Stat()
 		if err != nil {
-			log.Error("Couldn't gather information for '%s'", fullname)
+			log.Error("Couldn't gather information for image file '%s'", fullName)
 		}
 		if imgInfo.IsDir() {
-			// Meh; don't need the warning. Just skip non-files.
-			// log.Warning("'%s' is a folder; skipping it", fullname)
+			// skip non-files
 			continue
 		}
 		if filepath.Ext(name) == ".png" {
 			img, err := png.Decode(imgFile)
 			if err != nil {
-				log.Error("Problem decoding png sprite image in '%s'", fullname)
+				log.Error("Problem decoding png image in '%s'", fullName)
 				continue
 			}
 			name = name[0 : len(name)-4]
 			images = append(images, Image{name, img})
 		} else {
-			log.Debug("Ignoring non-png file '%s'", fullname)
+			log.Debug("Ignoring non-png file '%s'", fullName)
 		}
 	}
 
 	if len(images) == 0 {
-		log.Warning("'%s' contains no images; no sprite-sheet will be generated", path)
+		log.Warning("Folder '%s' contains no images; no sprite-sheet will be generated", path)
 	}
 
 	return images, nil
+}
+
+// Check whether a sprite name describes a hi-res (e.g. retina) sprite. If so,
+// return the base name and magnification factor.
+func IsMagnified(name string) (isIt bool, baseName string, factor float64) {
+
+	segments := strings.Split(name, "@")
+	if len(segments) != 2 {
+		return false, name, 1
+	}
+	baseName = segments[0]
+	factorStr := segments[1]
+	if factorStr[len(factorStr)-1] == 'x' {
+		f, err := strconv.ParseFloat(factorStr[0:len(factorStr)-1], 64)
+		if err != nil {
+			return false, name, 1
+		}
+		isIt   = true
+		factor = f
+	} else {
+		return false, name, 1
+	}
+	return
 }
 
 // Compose the spritesheet image and return an array of individual sprite data.
@@ -116,33 +138,35 @@ func GenerateSpriteSheet(images []Image) (sheet draw.Image, sprites []Sprite) {
 	)
 	sprites = make([]Sprite, 0)
 
-	// calculate the size of the spritesheet and accumulate data for the
-	// individual sprites
+	// calculate the size of the spritesheet and accumulate position and padding
+	// data for the individual sprites within the sheet
 	for _, img := range images {
 		bounds := img.Bounds()
 
-		_, name, factor := IsMagnified(img.Name)
-		thisTopPadding := int(math.Ceil(float64(factor)))
+		_, name, factor   := IsMagnified(img.Name)
+		thisTopPadding    := math.Ceil(factor)
 		thisBottomPadding := thisTopPadding
 
-		var prevBottomPadding int
+		var prevBottomPadding float64
 		if len(sprites) == 0 {
 			prevBottomPadding = 0
 			thisTopPadding = 0
 		} else {
-			prevBottomPadding = sprites[len(sprites)-1].BottomPadding
+			prevBottomPadding = float64(sprites[len(sprites)-1].BottomPadding)
 		}
 
-		thisTopPadding = int(math.Max(float64(thisTopPadding), float64(prevBottomPadding)))
+		thisTopPadding = math.Max(thisTopPadding, prevBottomPadding)
+		thisTopPaddingInt    := int(thisTopPadding)
+		thisBottomPaddingInt := int(thisBottomPadding)
 		newSprite := Sprite{
 			name,
 			factor,
-			thisTopPadding,
-			thisBottomPadding,
-			image.Rect(0, sheetHeight+thisTopPadding, bounds.Dx(), sheetHeight+thisTopPadding+bounds.Dy()),
+			thisTopPaddingInt,
+			thisBottomPaddingInt,
+			image.Rect(0, sheetHeight+thisTopPaddingInt, bounds.Dx(), sheetHeight+thisTopPaddingInt+bounds.Dy()),
 		}
 		sprites = append(sprites, newSprite)
-		sheetHeight += bounds.Dy() + thisTopPadding
+		sheetHeight += bounds.Dy() + thisTopPaddingInt
 		if bounds.Dx() > sheetWidth {
 			sheetWidth = bounds.Dx()
 		}
@@ -172,17 +196,13 @@ func GenerateScssVariables(folder string, sheetName string, sheetImg image.Image
 	variables = append(variables, def)
 
 	for _, s := range sprites {
-		// isMag, name, factor := IsMagnified(s.Name)
-		// if !isMag {
-		// 	factor = 1
-		// }
 		name := s.Name
 		factor := s.MagFactor
 		prefix := fmt.Sprintf("%s-%s", sheetName, name)
-		vX := fmt.Sprintf("$%s-x: %#vpx;", prefix, float32(-s.Min.X)/factor)
-		vY := fmt.Sprintf("$%s-y: %#vpx;", prefix, float32(-s.Min.Y)/factor)
-		vW := fmt.Sprintf("$%s-width: %#vpx;", prefix, float32(s.Width())/factor)
-		vH := fmt.Sprintf("$%s-height: %#vpx;", prefix, float32(s.Height())/factor)
+		vX := fmt.Sprintf("$%s-x: %#vpx;", prefix, float64(-s.Min.X)/factor)
+		vY := fmt.Sprintf("$%s-y: %#vpx;", prefix, float64(-s.Min.Y)/factor)
+		vW := fmt.Sprintf("$%s-width: %#vpx;", prefix, float64(s.Width())/factor)
+		vH := fmt.Sprintf("$%s-height: %#vpx;", prefix, float64(s.Height())/factor)
 		def := fmt.Sprintf("%s\n%s\n%s\n%s\n", vX, vY, vW, vH)
 		variables = append(variables, def)
 	}
@@ -197,24 +217,17 @@ const mixinFormat string = `@mixin %s-%s() {
   height: %#vpx;
 }
 `
-
 func GenerateScssMixins(folder string, sheetName string, sheetImg image.Image, sprites []Sprite) string {
 	mixins := make([]string, 0, len(sprites))
 
 	for _, s := range sprites {
-		// isMag, name, factor := IsMagnified(s.Name)
 		name := s.Name
 		factor := s.MagFactor
 		bgSize := ""
 		if factor != 1 {
-			bgSize = fmt.Sprintf("\n  @include background-size(%vpx %vpx);", float32(sheetImg.Bounds().Max.X)/factor, float32(sheetImg.Bounds().Max.Y)/factor)
+			bgSize = fmt.Sprintf("\n  @include background-size(%vpx %vpx);", float64(sheetImg.Bounds().Max.X)/factor, float64(sheetImg.Bounds().Max.Y)/factor)
 		}
-		// if !isMag {
-		// 	factor = 1
-		// } else {
-		// 	bgSize = fmt.Sprintf("\n  @include background-size(%vpx %vpx);", float32(sheetImg.Bounds().Max.X)/factor, float32(sheetImg.Bounds().Max.Y)/factor)
-		// }
-		def := fmt.Sprintf(mixinFormat, sheetName, name, folder+"/"+sheetName, float32(-s.Min.X)/factor, float32(-s.Min.Y)/factor, bgSize, float32(s.Width())/factor, float32(s.Height())/factor)
+		def := fmt.Sprintf(mixinFormat, sheetName, name, folder+"/"+sheetName, float64(-s.Min.X)/factor, float64(-s.Min.Y)/factor, bgSize, float64(s.Width())/factor, float64(s.Height())/factor)
 		mixins = append(mixins, def)
 	}
 
@@ -228,24 +241,17 @@ const classFormat string = `.%s-%s {
   height: %#vpx;
 }
 `
-
 func GenerateCssClasses(folder string, sheetName string, sheetImg image.Image, sprites []Sprite) string {
 	classes := make([]string, 0, len(sprites))
 
 	for _, s := range sprites {
-		// isMag, name, factor := IsMagnified(s.Name)
 		name := s.Name
 		factor := s.MagFactor
 		bgSize := ""
 		if factor != 1 {
-			bgSize = fmt.Sprintf("\n  @include background-size(%vpx %vpx);", float32(sheetImg.Bounds().Max.X)/factor, float32(sheetImg.Bounds().Max.Y)/factor)
+			bgSize = fmt.Sprintf("\n  @include background-size(%vpx %vpx);", float64(sheetImg.Bounds().Max.X)/factor, float64(sheetImg.Bounds().Max.Y)/factor)
 		}
-		// if !isMag {
-		// 	factor = 1
-		// } else {
-		// 	bgSize = fmt.Sprintf("\n  @include background-size(%vpx %vpx);", float32(sheetImg.Bounds().Max.X)/factor, float32(sheetImg.Bounds().Max.Y)/factor)
-		// }
-		class := fmt.Sprintf(classFormat, sheetName, name, folder+"/"+sheetName, float32(-s.Min.X)/factor, float32(-s.Min.Y)/factor, bgSize, float32(s.Width())/factor, float32(s.Height())/factor)
+		class := fmt.Sprintf(classFormat, sheetName, name, folder+"/"+sheetName, float64(-s.Min.X)/factor, float64(-s.Min.Y)/factor, bgSize, float64(s.Width())/factor, float64(s.Height())/factor)
 		classes = append(classes, class)
 	}
 
@@ -253,7 +259,6 @@ func GenerateCssClasses(folder string, sheetName string, sheetImg image.Image, s
 }
 
 func SpritesModified(folder, sheetFileName string) (bool, error) {
-	// sheetFileName := folder + ".png"
 	sheetStat, err := os.Stat(sheetFileName)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -423,29 +428,6 @@ func GenerateSpriteSheetsFromFolders(superFolder, outputFolder, outputURI string
 	}
 	err = anyErrors
 
-	return
-}
-
-// Check whether a sprite name describes a hi-res (e.g. retina) sprite. If so,
-// return the base name and magnification factor.
-func IsMagnified(name string) (isIt bool, baseName string, factor float32) {
-
-	segments := strings.Split(name, "@")
-	if len(segments) != 2 {
-		return false, name, 1
-	}
-	baseName = segments[0]
-	factorStr := segments[1]
-	if factorStr[len(factorStr)-1] == 'x' {
-		f, err := strconv.ParseFloat(factorStr[0:len(factorStr)-1], 32)
-		if err != nil {
-			return false, name, 1
-		}
-		factor = float32(f)
-		isIt = true
-	} else {
-		return false, name, 1
-	}
 	return
 }
 
