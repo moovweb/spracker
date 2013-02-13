@@ -259,7 +259,7 @@ func GenerateCssClasses(folder string, sheetName string, sheetImg image.Image, s
 		factor := s.MagFactor
 		bgSize := ""
 		if factor != 1 {
-			bgSize = fmt.Sprintf("\n background-size: %vpx %vpx;", float64(sheetImg.Bounds().Max.X)/factor, float64(sheetImg.Bounds().Max.Y)/factor)
+			bgSize = fmt.Sprintf("\n  background-size: %vpx %vpx;", float64(sheetImg.Bounds().Max.X)/factor, float64(sheetImg.Bounds().Max.Y)/factor)
 		}
 		class := fmt.Sprintf(classFormat, sheetName, name, folder+"/"+sheetName, float64(-s.Min.X)/factor, float64(-s.Min.Y)/factor, bgSize, float64(s.Width())/factor, float64(s.Height())/factor)
 		classes = append(classes, class)
