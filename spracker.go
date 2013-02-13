@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"image"
 	"image/draw"
+	"image/jpeg"
 	"image/png"
 	"math"
 	"os"
@@ -87,16 +88,25 @@ func ReadImageFolder(path string, log *golog.Logger) (images []Image, err error)
 			// skip non-files
 			continue
 		}
-		if filepath.Ext(name) == ".png" {
+		ext := strings.ToLower(filepath.Ext(name))
+		if ext == ".png" {
 			img, err := png.Decode(imgFile)
 			if err != nil {
 				log.Error("Problem decoding png image in '%s'", fullName)
 				continue
 			}
-			name = name[0 : len(name)-4]
+			name = name[0 : len(name)-len(ext)]
+			images = append(images, Image{name, img})
+		} else if ext == ".jpg" || ext == ".jpeg" {
+			img, err := jpeg.Decode(imgFile)
+			if err != nil {
+				log.Error("Problem decoding jpeg image in '%s'", fullName)
+				continue
+			}
+			name = name[0 : len(name)-len(ext)]
 			images = append(images, Image{name, img})
 		} else {
-			log.Debug("Ignoring non-png file '%s'", fullName)
+			log.Debug("Ignoring unrecognized file '%s'", fullName)
 		}
 	}
 
@@ -249,7 +259,7 @@ func GenerateCssClasses(folder string, sheetName string, sheetImg image.Image, s
 		factor := s.MagFactor
 		bgSize := ""
 		if factor != 1 {
-			bgSize = fmt.Sprintf("\n  @include background-size(%vpx %vpx);", float64(sheetImg.Bounds().Max.X)/factor, float64(sheetImg.Bounds().Max.Y)/factor)
+			bgSize = fmt.Sprintf("\n background-size: %vpx %vpx;", float64(sheetImg.Bounds().Max.X)/factor, float64(sheetImg.Bounds().Max.Y)/factor)
 		}
 		class := fmt.Sprintf(classFormat, sheetName, name, folder+"/"+sheetName, float64(-s.Min.X)/factor, float64(-s.Min.Y)/factor, bgSize, float64(s.Width())/factor, float64(s.Height())/factor)
 		classes = append(classes, class)
@@ -351,7 +361,11 @@ func GenerateSpriteSheetFromFolder(inputFolder, outputFolder, outputURI string, 
 		vars := GenerateScssVariables(outputURI, sheetName, spriteSheet, sprites)
 		mixins := GenerateScssMixins(outputURI, sheetName, spriteSheet, sprites)
 		classes := GenerateCssClasses(outputURI, sheetName, spriteSheet, sprites)
-		styleSheet = fmt.Sprintf("%s\n%s\n%s", vars, mixins, classes)
+		if generateScss {
+			styleSheet = fmt.Sprintf("%s\n%s\n%s", vars, mixins, classes)
+		} else {
+			styleSheet = classes+"\n"
+		}
 		return
 	} else {
 		skipped = true
