@@ -26,9 +26,9 @@ type Image struct {
 
 // Bundle the name of a sprite image with its viewport into the spritesheet.
 type Sprite struct {
-	Name string
-	MagFactor float64
-	TopPadding int
+	Name          string
+	MagFactor     float64
+	TopPadding    int
 	BottomPadding int
 	image.Rectangle
 }
@@ -46,14 +46,14 @@ func (s *Sprite) Height() int {
 func ReadImageFolder(path string, log *golog.Logger) (images []Image, err error) {
 	dir, err := os.Open(path)
 	if err != nil {
-		log.Error("Couldn't open folder '%s'", path)
+		log.Errorf("Couldn't open folder '%s'", path)
 		return nil, err
 	} else {
 		defer dir.Close()
 	}
 	dirInfo, err := dir.Stat()
 	if err != nil {
-		log.Error("Couldn't gather information for folder '%s'", path)
+		log.Errorf("Couldn't gather information for folder '%s'", path)
 		return nil, err
 	}
 	if !dirInfo.IsDir() {
@@ -63,7 +63,7 @@ func ReadImageFolder(path string, log *golog.Logger) (images []Image, err error)
 
 	names, err := dir.Readdirnames(0)
 	if err != nil {
-		log.Error("Problem gathering names of image files in '%s'", path)
+		log.Errorf("Problem gathering names of image files in '%s'", path)
 		return nil, err
 	}
 
@@ -75,14 +75,14 @@ func ReadImageFolder(path string, log *golog.Logger) (images []Image, err error)
 		fullName := filepath.Join(path, name)
 		imgFile, err := os.Open(fullName)
 		if err != nil {
-			log.Error("Couldn't open image file '%s'", fullName)
+			log.Errorf("Couldn't open image file '%s'", fullName)
 			continue
 		} else {
 			defer imgFile.Close()
 		}
 		imgInfo, err := imgFile.Stat()
 		if err != nil {
-			log.Error("Couldn't gather information for image file '%s'", fullName)
+			log.Errorf("Couldn't gather information for image file '%s'", fullName)
 		}
 		if imgInfo.IsDir() {
 			// skip non-files
@@ -92,7 +92,7 @@ func ReadImageFolder(path string, log *golog.Logger) (images []Image, err error)
 		if ext == ".png" {
 			img, err := png.Decode(imgFile)
 			if err != nil {
-				log.Error("Problem decoding png image in '%s'", fullName)
+				log.Errorf("Problem decoding png image in '%s'", fullName)
 				continue
 			}
 			name = name[0 : len(name)-len(ext)]
@@ -100,18 +100,18 @@ func ReadImageFolder(path string, log *golog.Logger) (images []Image, err error)
 		} else if ext == ".jpg" || ext == ".jpeg" {
 			img, err := jpeg.Decode(imgFile)
 			if err != nil {
-				log.Error("Problem decoding jpeg image in '%s'", fullName)
+				log.Errorf("Problem decoding jpeg image in '%s'", fullName)
 				continue
 			}
 			name = name[0 : len(name)-len(ext)]
 			images = append(images, Image{name, img})
 		} else {
-			log.Debug("Ignoring unrecognized file '%s'", fullName)
+			log.Debugf("Ignoring unrecognized file '%s'", fullName)
 		}
 	}
 
 	if len(images) == 0 {
-		log.Warning("Folder '%s' contains no images; no sprite-sheet will be generated", path)
+		log.Warningf("Folder '%s' contains no images; no sprite-sheet will be generated", path)
 	}
 
 	return images, nil
@@ -132,7 +132,7 @@ func IsMagnified(name string) (isIt bool, baseName string, factor float64) {
 		if err != nil {
 			return false, name, 1
 		}
-		isIt   = true
+		isIt = true
 		factor = f
 	} else {
 		return false, name, 1
@@ -153,8 +153,8 @@ func GenerateSpriteSheet(images []Image) (sheet draw.Image, sprites []Sprite) {
 	for _, img := range images {
 		bounds := img.Bounds()
 
-		_, name, factor   := IsMagnified(img.Name)
-		thisTopPadding    := math.Ceil(factor)
+		_, name, factor := IsMagnified(img.Name)
+		thisTopPadding := math.Ceil(factor)
 		thisBottomPadding := thisTopPadding
 
 		var prevBottomPadding float64
@@ -166,7 +166,7 @@ func GenerateSpriteSheet(images []Image) (sheet draw.Image, sprites []Sprite) {
 		}
 
 		thisTopPadding = math.Max(thisTopPadding, prevBottomPadding)
-		thisTopPaddingInt    := int(thisTopPadding)
+		thisTopPaddingInt := int(thisTopPadding)
 		thisBottomPaddingInt := int(thisBottomPadding)
 		newSprite := Sprite{
 			name,
@@ -227,6 +227,7 @@ const mixinFormat string = `@mixin %s-%s() {
   height: %#vpx;
 }
 `
+
 func GenerateScssMixins(folder string, sheetName string, sheetImg image.Image, sprites []Sprite) string {
 	mixins := make([]string, 0, len(sprites))
 
@@ -251,6 +252,7 @@ const classFormat string = `.%s-%s {
   height: %#vpx;
 }
 `
+
 func GenerateCssClasses(folder string, sheetName string, sheetImg image.Image, sprites []Sprite) string {
 	classes := make([]string, 0, len(sprites))
 
@@ -317,10 +319,10 @@ func GenerateSpriteSheetFromFolder(inputFolder, outputFolder, outputURI string, 
 	folder, ferr := os.Open(inputFolder)
 	err = ferr
 	if err != nil && os.IsNotExist(err) {
-		log.Info("Specified sprite folder '%s' does not exist; not generating anything", inputFolder)
+		log.Infof("Specified sprite folder '%s' does not exist; not generating anything", inputFolder)
 		return
 	} else if err != nil {
-		log.Error("Couldn't open folder '%s' containing sprite images", inputFolder)
+		log.Errorf("Couldn't open folder '%s' containing sprite images", inputFolder)
 		return
 	} else {
 		defer folder.Close()
@@ -328,11 +330,11 @@ func GenerateSpriteSheetFromFolder(inputFolder, outputFolder, outputURI string, 
 	folderInfo, ferr := folder.Stat()
 	err = ferr
 	if err != nil {
-		log.Error("Couldn't gather information for '%s'", inputFolder)
+		log.Errorf("Couldn't gather information for '%s'", inputFolder)
 		return
 	}
 	if !folderInfo.IsDir() {
-		log.Error("'%s' must be a folder", inputFolder)
+		log.Errorf("'%s' must be a folder", inputFolder)
 		return
 	}
 
@@ -340,11 +342,11 @@ func GenerateSpriteSheetFromFolder(inputFolder, outputFolder, outputURI string, 
 		modified, ferr := SpritesModified(inputFolder, filepath.Join(outputFolder, sheetName+".png"))
 		err = ferr
 		if err != nil {
-			log.Error("problem checking timestamps of '%s' and '%s.png'", inputFolder, sheetName)
+			log.Errorf("problem checking timestamps of '%s' and '%s.png'", inputFolder, sheetName)
 			return
 		}
 		if !modified {
-			log.Info("no sprites have been added or modified since '%s.png' was generated; skipping generation", sheetName)
+			log.Infof("no sprites have been added or modified since '%s.png' was generated; skipping generation", sheetName)
 			skipped = true
 			return
 		}
@@ -353,7 +355,7 @@ func GenerateSpriteSheetFromFolder(inputFolder, outputFolder, outputURI string, 
 	images, ferr := ReadImageFolder(inputFolder, log)
 	err = ferr
 	if err != nil {
-		log.Error("Problem reading sprite images in '%s'", inputFolder)
+		log.Errorf("Problem reading sprite images in '%s'", inputFolder)
 		return
 	} else if len(images) > 0 {
 		sheet, sprites := GenerateSpriteSheet(images)
@@ -364,7 +366,7 @@ func GenerateSpriteSheetFromFolder(inputFolder, outputFolder, outputURI string, 
 		if generateScss {
 			styleSheet = fmt.Sprintf("%s\n%s\n%s", vars, mixins, classes)
 		} else {
-			styleSheet = classes+"\n"
+			styleSheet = classes + "\n"
 		}
 		return
 	} else {
@@ -380,26 +382,26 @@ func GenerateSpriteSheetsFromFolders(superFolder, outputFolder, outputURI string
 
 	container, err := os.Open(superFolder)
 	if err != nil && os.IsNotExist(err) {
-		log.Info("Specified sprite folder '%s' does not exist; not generating anything", superFolder)
+		log.Infof("Specified sprite folder '%s' does not exist; not generating anything", superFolder)
 		return nil, nil, err
 	} else if err != nil {
-		log.Error("Couldn't open folder '%s' containing sprite subfolders", superFolder)
+		log.Errorf("Couldn't open folder '%s' containing sprite subfolders", superFolder)
 		return nil, nil, err
 	} else {
 		defer container.Close()
 	}
 	containerInfo, err := container.Stat()
 	if err != nil {
-		log.Error("Couldn't gather information for '%s'", superFolder)
+		log.Errorf("Couldn't gather information for '%s'", superFolder)
 		return nil, nil, err
 	}
 	if !containerInfo.IsDir() {
-		log.Error("'%s' must be a folder", superFolder)
+		log.Errorf("'%s' must be a folder", superFolder)
 		return nil, nil, err
 	}
 	folders, err := container.Readdirnames(0)
 	if err != nil {
-		log.Error("Problem gathering names of sprite subfolders in '%s'", superFolder)
+		log.Errorf("Problem gathering names of sprite subfolders in '%s'", superFolder)
 		return nil, nil, err
 	}
 
@@ -411,12 +413,12 @@ func GenerateSpriteSheetsFromFolders(superFolder, outputFolder, outputURI string
 		if checkTimeStamps {
 			modified, err := SpritesModified(filepath.Join(superFolder, folder), filepath.Join(outputFolder, folder+".png"))
 			if err != nil {
-				log.Error("problem checking timestamps of '%s' and '%s.png'", folder, folder)
+				log.Errorf("problem checking timestamps of '%s' and '%s.png'", folder, folder)
 				anyErrors = err
 				continue
 			}
 			if !modified {
-				log.Info("no sprites have been added or modified since '%s.png' was generated; skipping generation", folder)
+				log.Infof("no sprites have been added or modified since '%s.png' was generated; skipping generation", folder)
 				continue
 			}
 		}
@@ -451,10 +453,10 @@ func WriteSpriteSheet(img image.Image, folder string, name string, log *golog.Lo
 	if err != nil {
 		err = os.MkdirAll(folder, 0775)
 		if err != nil {
-			log.Error("Unable to create sprite-sheet output folder '%s'", folder)
+			log.Errorf("Unable to create sprite-sheet output folder '%s'", folder)
 			return err
 		} else {
-			log.Info("Created sprite-sheet output folder '%s'", folder)
+			log.Infof("Created sprite-sheet output folder '%s'", folder)
 		}
 	} else {
 		defer dir.Close()
@@ -464,14 +466,14 @@ func WriteSpriteSheet(img image.Image, folder string, name string, log *golog.Lo
 	os.Remove(fullname)
 	outFile, err := os.Create(fullname)
 	if err != nil {
-		log.Error("Couldn't create sprite-sheet output file '%s'", fullname)
+		log.Errorf("Couldn't create sprite-sheet output file '%s'", fullname)
 		return err
 	} else {
 		defer outFile.Close()
 	}
 	err = png.Encode(outFile, img)
 	if err != nil {
-		log.Warning("Problem writing sprite-sheet to '%s'", fullname)
+		log.Warningf("Problem writing sprite-sheet to '%s'", fullname)
 		return err
 	}
 	return nil
@@ -483,10 +485,10 @@ func WriteStyleSheet(style string, folder string, baseName string, log *golog.Lo
 	if err != nil {
 		err = os.MkdirAll(folder, 0775)
 		if err != nil {
-			log.Error("Unable to create stylesheet output folder '%s'", folder)
+			log.Errorf("Unable to create stylesheet output folder '%s'", folder)
 			return err
 		} else {
-			log.Info("Created stylesheet output folder '%s'", folder)
+			log.Infof("Created stylesheet output folder '%s'", folder)
 		}
 	} else {
 		defer dir.Close()
@@ -496,14 +498,14 @@ func WriteStyleSheet(style string, folder string, baseName string, log *golog.Lo
 	os.Remove(fullname)
 	outFile, err := os.Create(fullname)
 	if err != nil {
-		log.Error("Couldn't create SCSS output file '%s'", fullname)
+		log.Errorf("Couldn't create SCSS output file '%s'", fullname)
 		return err
 	} else {
 		defer outFile.Close()
 	}
 	_, err = outFile.WriteString(style)
 	if err != nil {
-		log.Error("Problem writing styles to '%s'", fullname)
+		log.Errorf("Problem writing styles to '%s'", fullname)
 		return err
 	}
 	return nil
