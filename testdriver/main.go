@@ -34,13 +34,13 @@ func main() {
 
     imgResp, netErr := http.Get(fmt.Sprintf("http://placekitten.com/%d/%d", size, size))
     if netErr != nil || imgResp.Status != "200 OK" {
-      log.Error("unable to download test sprite of size %d x %d", size, size)
+      log.Errorf("unable to download test sprite of size %d x %d", size, size)
       continue
     }
 
     imgData, readErr := ioutil.ReadAll(imgResp.Body)
     if readErr != nil {
-      log.Error("unable to read image data")
+      log.Errorf("unable to read image data")
       continue
     }
 
@@ -53,22 +53,22 @@ func main() {
 
     writeErr := ioutil.WriteFile(fileName, imgData, 0666)
     if writeErr != nil {
-      log.Error("unable to write image data")
+      log.Errorf("unable to write image data")
     }
   }
 
   // wd, _ := os.Getwd()
   sheet, styles, _, spriteErr := spracker.GenerateSpriteSheetFromFolder("kittens", "kittens", ".", false, false, log)
   if spriteErr != nil {
-    log.Error("unable to generate spritesheet; please delete images and stylesheets and try again")
+    log.Errorf("unable to generate spritesheet; please delete images and stylesheets and try again")
   } else {
     wspError := spracker.WriteSpriteSheet(sheet.Image, "kittens", sheet.Name, log)
     wstError := spracker.WriteStyleSheet(styles, "kittens", sheet.Name+".css", log)
     if wspError != nil {
-      log.Error("unable to write spritesheet")
+      log.Errorf("unable to write spritesheet")
     }
     if wstError != nil {
-      log.Error("unable to write stylesheet")
+      log.Errorf("unable to write stylesheet")
     }
   }
 

@@ -18,7 +18,7 @@ import (
 	"golog"
 )
 
-// We need to bundle an image with it's name (derived from its filename).
+// We need to bundle an image with its name (derived from its filename).
 type Image struct {
 	Name string
 	image.Image
@@ -120,7 +120,6 @@ func ReadImageFolder(path string, log *golog.Logger) (images []Image, err error)
 // Check whether a sprite name describes a hi-res (e.g. retina) sprite. If so,
 // return the base name and magnification factor.
 func IsMagnified(name string) (isIt bool, baseName string, factor float64) {
-
 	segments := strings.Split(name, "@")
 	if len(segments) != 2 {
 		return false, name, 1
