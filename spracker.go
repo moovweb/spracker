@@ -140,7 +140,7 @@ func IsMagnified(name string) (isIt bool, baseName string, factor float64) {
 }
 
 // Compose the spritesheet image and return an array of individual sprite data.
-func GenerateSpriteSheet(images []Image) (sheet draw.Image, sprites []Sprite) {
+func GenerateSpriteSheet(images []Image, log *golog.Logger) (sheet draw.Image, sprites []Sprite) {
 	var (
 		sheetHeight int = 0
 		sheetWidth  int = 0
@@ -155,6 +155,13 @@ func GenerateSpriteSheet(images []Image) (sheet draw.Image, sprites []Sprite) {
 		_, name, factor := IsMagnified(img.Name)
 		thisTopPadding := math.Ceil(factor)
 		thisBottomPadding := thisTopPadding
+
+		// see if the image dimensions are a multiple of the magnification factor
+		fudge := 0
+		if (math.Mod(float64(bounds.Dy()), factor) != 0) {
+			fudge = 1
+			log.Warningf("Height of sprite `%s` (%dpx) is not a multiple of its magnification factor (%vx); rounding up to avoid truncated pixels.", name, bounds.Dy(), factor)
+		}
 
 		var prevBottomPadding float64
 		if len(sprites) == 0 {
@@ -172,7 +179,7 @@ func GenerateSpriteSheet(images []Image) (sheet draw.Image, sprites []Sprite) {
 			factor,
 			thisTopPaddingInt,
 			thisBottomPaddingInt,
-			image.Rect(0, sheetHeight+thisTopPaddingInt, bounds.Dx(), sheetHeight+thisTopPaddingInt+bounds.Dy()),
+			image.Rect(0, sheetHeight+thisTopPaddingInt-fudge, bounds.Dx(), sheetHeight+thisTopPaddingInt+bounds.Dy()),
 		}
 		sprites = append(sprites, newSprite)
 		sheetHeight += bounds.Dy() + thisTopPaddingInt
@@ -357,7 +364,7 @@ func GenerateSpriteSheetFromFolder(inputFolder, outputFolder, outputURI string, 
 		log.Errorf("Problem reading sprite images in '%s'", inputFolder)
 		return
 	} else if len(images) > 0 {
-		sheet, sprites := GenerateSpriteSheet(images)
+		sheet, sprites := GenerateSpriteSheet(images, log)
 		spriteSheet = Image{sheetName, sheet}
 		vars := GenerateScssVariables(outputURI, sheetName, spriteSheet, sprites)
 		mixins := GenerateScssMixins(outputURI, sheetName, spriteSheet, sprites)
@@ -426,7 +433,7 @@ func GenerateSpriteSheetsFromFolders(superFolder, outputFolder, outputURI string
 			anyErrors = err
 			continue
 		} else if len(images) > 0 {
-			sheet, sprites := GenerateSpriteSheet(images)
+			sheet, sprites := GenerateSpriteSheet(images, log)
 			vars := GenerateScssVariables(outputURI, folder, sheet, sprites)
 			mixins := GenerateScssMixins(outputURI, folder, sheet, sprites)
 			classes := GenerateCssClasses(outputURI, folder, sheet, sprites)
