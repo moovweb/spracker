@@ -46,11 +46,11 @@ func main() {
 	for i, sheet := range sheets {
 		wstErr := spracker.WriteSpriteSheet(sheet.Image, spriteSheetsFolder, sheet.Name, log)
 		if wstErr == nil {
-			log.Info("Generated sprite-sheet '%s.png'", filepath.Join(spriteSheetsFolder, sheet.Name))
+			log.Infof("Generated sprite-sheet '%s.png'", filepath.Join(spriteSheetsFolder, sheet.Name))
 		}
 		wspErr := spracker.WriteStyleSheet(styles[i], styleSheetsFolder, sheet.Name+stylesheetExtension, log)
 		if wspErr == nil {
-			log.Info("Generated stylesheet '%s%s'", filepath.Join(styleSheetsFolder, sheet.Name), stylesheetExtension)
+			log.Infof("Generated stylesheet '%s%s'", filepath.Join(styleSheetsFolder, sheet.Name), stylesheetExtension)
 		}
 	}
 
