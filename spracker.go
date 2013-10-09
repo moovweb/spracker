@@ -24,6 +24,31 @@ type Image struct {
 	image.Image
 }
 
+// sort interface so we can more optimally pack the spritesheet
+type Images []Image
+
+func (s Images) Len() int { return len(s) }
+
+func (s Images) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
+
+// by width since they're placed vertically
+func (s Images) Less(i, j int) bool {
+	_, _, factor1 := IsMagnified(s[i].Name)
+	_, _, factor2 := IsMagnified(s[j].Name)
+	return s[i].Bounds().Dx() + int(math.Ceil(factor1)) > s[j].Bounds().Dx() + int(math.Ceil(factor2))
+}
+
+func (s Images) MaxWidth() int {
+	sort.Sort(s)
+	return s[0].Bounds().Dx()
+}
+
+func (s Images) MinWidth() int {
+	sort.Sort(s)
+	sort.Reverse(s)
+	return s[0].Bounds().Dx()
+}
+
 // Bundle the name of a sprite image with its viewport into the spritesheet.
 type Sprite struct {
 	Name          string
@@ -139,18 +164,225 @@ func IsMagnified(name string) (isIt bool, baseName string, factor float64) {
 	return
 }
 
+type batchGrid struct {
+	grid [][]bool
+	heights, widths []int
+	numCols, numRows int
+}
+
+func NewBatchGrid(maxWidth, maxCols int) batchGrid {
+	maxCols+=1
+	counter = -1
+	myGrid := batchGrid{}
+	myGrid.grid = make([][]bool, maxCols)
+	for i := 0; i < maxCols; i ++ {
+		myGrid.grid[i] = make([]bool, maxCols)
+	}
+	// myGrid.grid[0] = make([]bool, 1)
+	myGrid.numRows, myGrid.numCols = 1, 1
+	myGrid.heights = make([]int, maxCols)
+	myGrid.heights[0] = 2147000000 // way more than necessary (i'd hope)
+	myGrid.widths = make([]int, maxCols)
+	myGrid.widths[0] = maxWidth
+	// myGrid.isRowFull = make([]bool, 1)
+	// myGrid.isRowFull[0] = false
+	return myGrid
+}
+
+func (g batchGrid) printGrid() {
+	tempgrid := make([][]bool, g.numRows)
+	for i := 0; i < g.numRows; i++ {
+		tempgrid[i] = g.grid[i][:g.numCols]
+	}
+	fmt.Printf("grid:\n%vheights: %v\nwidths: %v\nnumRows: %v\nnomCols: %v\n", prettyFormat(tempgrid), g.heights[:g.numRows], g.widths[:g.numCols], g.numRows, g.numCols)
+}
+
+func prettyFormat(grid [][]bool) string {
+	retval := ""
+	for _, x := range grid {
+		retval += fmt.Sprintf("%v\n", x)
+	}
+	return retval
+}
+
+var counter int
+
+func (g *batchGrid) Place(width , height int) (int ,int) {
+	println("height:", height)
+	counter += 1
+	yOffset := 0
+	println("=========== place #", counter)
+	g.printGrid()
+	for i := 0; i < g.numRows; i++ {
+		if i > 0 {
+			yOffset += g.heights[i - 1]
+		}
+		xOffset := 0
+		for j := 0; j < g.numCols; j++ {
+			if j > 0 {
+				xOffset += g.widths[j-1]
+			}
+			if g.grid[i][j] == false { // not used, check to see if it can be placed rooted here
+				able, x, y := g.check(width, height, i, j)
+				if !able {
+					if x == -2 { // sentinel value for not enough horizontal space left, don't waste your time checking the rest of the row
+						break
+					} else {
+						continue
+					}
+				}
+				println("Place at g.grid[i][j]:", i, j)
+				temp := 0
+				for ind := j; ind < y; ind++ {
+					temp += g.widths[ind]
+				}
+				g.splitCol(y, width - temp)
+				temp = 0
+				for ind := i; ind < x; ind++ {
+					temp += g.heights[ind]
+				}
+				g.splitRow(x, height - temp)
+				g.markAsUsed(i,j,x,y)
+				return xOffset, yOffset
+			}
+		}
+	}
+	return -1, -1
+}
+
+func (g *batchGrid) splitRow(rowNum, howMuch int) {
+	//println("row split")
+	if howMuch > g.heights[rowNum] || howMuch <= 0 {
+		panic("something very wrong is happening.")		
+	}
+	if howMuch == g.heights[rowNum] {
+		println("same as height, skipping...")
+		return
+	}
+	g.numRows++
+	// copy stuff over, then adjust the 2 rows in question
+	for i := g.numRows-2; i > rowNum; i-- {
+		g.heights[i+1] = g.heights[i]
+	}
+	g.heights[rowNum+1] = g.heights[rowNum] - howMuch
+	g.heights[rowNum] = howMuch
+	// now split the row and copy stuff over
+	for i := g.numRows-2; i >= rowNum; i-- {
+		for j := 0; j < g.numCols; j++ {
+			g.grid[i+1][j] = g.grid[i][j]
+		}
+	}
+}
+
+func (g *batchGrid) splitCol(colNum, howMuch int) {
+	//println("col split")
+	if howMuch > g.widths[colNum] || howMuch <= 0 {
+		panic(fmt.Sprintf("something very wrong is happening. tried to split a %d-pixel wide column at %d", g.widths[colNum], howMuch))
+	}
+	if howMuch == g.widths[colNum] {
+		println("same as width, skipping...")
+		return
+	}
+	g.numCols++
+	// copy stuff over, then adjust the 2 columns in question
+	for i := g.numCols-2; i > colNum; i-- {
+		g.widths[i+1] = g.widths[i]
+	}
+	g.widths[colNum+1] = g.widths[colNum] - howMuch
+	g.widths[colNum] = howMuch
+	// now split the columns and copy stuff over
+	for j := g.numCols-2; j >= colNum; j-- {
+		for i := 0; i < g.numRows; i++ {
+			g.grid[i][j+1] = g.grid[i][j]
+		}
+	}
+}
+
+func (g *batchGrid) check(width, height, i, j int) (able bool, x, y int) {
+	x, y = i, j
+	// find the index where height is first encompassed
+	for temp := 0; x < g.numRows && temp + g.heights[x] < height; x++ {
+		temp += g.heights[x]
+		if g.grid[x][y] {
+			println("spot is taken on left edge")
+			return false, -1, -1
+		}
+	}
+	if g.grid[x][y] {
+		println("spot is taken on left edge")
+		return false, -1, -1
+	}
+	if x >= g.numRows {
+		println("too short (shouldn't ever be printed...)")
+		return false, -1, -1
+	}
+	for temp := 0; y < g.numCols && temp + g.widths[y] < width; y++ {
+		temp += g.widths[y]
+		if g.grid[x][y] {
+			println("spot is taken on bottom edge")
+			return false, -1, -1
+		}
+	}
+	if g.grid[x][y] {
+		println("spot is taken on bottom edge")
+		return false, -1, -1
+	}
+	if y >= g.numCols {
+		println("too squished in")
+		return false, -2, -2 // sentinel value to avoid unecessary checks
+	}
+	for ; i < x; i++ {
+		if g.grid[i][y] {
+			println("spot is taken on the right edge")
+			return false, -1, -1
+		}
+	}
+	return true, x, y
+}
+
+func (g *batchGrid) markAsUsed(starti, startj, endi, endj int) {
+	// println("before:")
+	// g.printGrid()
+	println(starti, startj, "->", endi, endj)
+	for i := starti; i <= endi; i++ {
+		println("i =", i)
+		for j := startj; j <= endj; j++ {
+			// println("*******************")
+			// g.printGrid()
+			g.grid[i][j] = true
+			// println("*******************")
+			// g.printGrid()
+			// println("*******************")
+		}
+	}
+	// println("after")
+	// g.printGrid()
+}
+
+func (g *batchGrid) checkIfSame(i, j int) {
+	if &g.grid[i][j] == &g.grid[i+1][j] {
+		panic("fuck this shit")
+	}
+}
+
 // Compose the spritesheet image and return an array of individual sprite data.
 func GenerateSpriteSheet(images []Image, log *golog.Logger) (sheet draw.Image, sprites []Sprite) {
 	var (
 		sheetHeight int = 0
-		sheetWidth  int = 0
+		sheetWidth  int = Images(images).MaxWidth()
 	)
 	sprites = make([]Sprite, 0)
+
+	//sort by width since the sprite are generated downwards
+	sort.Sort(Images(images))
+
+	grid := NewBatchGrid(sheetWidth, len(images))
 
 	// calculate the size of the spritesheet and accumulate position and padding
 	// data for the individual sprites within the sheet
 	for _, img := range images {
 		bounds := img.Bounds()
+		fmt.Printf("image bounds:%v\n", bounds)
 
 		_, name, factor := IsMagnified(img.Name)
 		thisTopPadding := math.Ceil(factor)
@@ -174,18 +406,28 @@ func GenerateSpriteSheet(images []Image, log *golog.Logger) (sheet draw.Image, s
 		thisTopPadding = math.Max(thisTopPadding, prevBottomPadding)
 		thisTopPaddingInt := int(thisTopPadding)
 		thisBottomPaddingInt := int(thisBottomPadding)
+
+		if bounds.Dx()+thisTopPaddingInt > sheetWidth {
+			sheetWidth = bounds.Dx()+thisTopPaddingInt
+			grid.widths[0] = bounds.Dx()+thisTopPaddingInt
+		}
+
+		x, y := grid.Place(bounds.Dx()+thisTopPaddingInt, bounds.Dy()+thisTopPaddingInt)
+		println(x, y)
+
 		newSprite := Sprite{
 			name,
 			factor,
 			thisTopPaddingInt,
 			thisBottomPaddingInt,
-			image.Rect(0, sheetHeight+thisTopPaddingInt-fudge, bounds.Dx(), sheetHeight+thisTopPaddingInt+bounds.Dy()),
+			image.Rect(x, y+thisTopPaddingInt-fudge, x+bounds.Dx(), y+thisTopPaddingInt+bounds.Dy()),
 		}
 		sprites = append(sprites, newSprite)
-		sheetHeight += bounds.Dy() + thisTopPaddingInt
-		if bounds.Dx() > sheetWidth {
-			sheetWidth = bounds.Dx()
-		}
+	}
+
+	sheetHeight = 0
+	for i := 0; i < grid.numRows - 1; i++{
+		sheetHeight += grid.heights[i]
 	}
 
 	// create the sheet image
