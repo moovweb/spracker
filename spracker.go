@@ -172,20 +172,17 @@ type batchGrid struct {
 
 func NewBatchGrid(maxWidth, maxCols int) batchGrid {
 	maxCols+=1
-	counter = -1
+	// counter = -1 // debug
 	myGrid := batchGrid{}
 	myGrid.grid = make([][]bool, maxCols)
 	for i := 0; i < maxCols; i ++ {
 		myGrid.grid[i] = make([]bool, maxCols)
 	}
-	// myGrid.grid[0] = make([]bool, 1)
 	myGrid.numRows, myGrid.numCols = 1, 1
 	myGrid.heights = make([]int, maxCols)
 	myGrid.heights[0] = 2147000000 // way more than necessary (i'd hope)
 	myGrid.widths = make([]int, maxCols)
 	myGrid.widths[0] = maxWidth
-	// myGrid.isRowFull = make([]bool, 1)
-	// myGrid.isRowFull[0] = false
 	return myGrid
 }
 
@@ -205,14 +202,13 @@ func prettyFormat(grid [][]bool) string {
 	return retval
 }
 
-var counter int
+// var counter int // debug
 
 func (g *batchGrid) Place(width , height int) (int ,int) {
-	println("height:", height)
-	counter += 1
+	// counter += 1 // debug
+	// println("===== place #, width, height =====:", counter, width, height) // debug
+	// g.printGrid() // debug
 	yOffset := 0
-	println("=========== place #", counter)
-	g.printGrid()
 	for i := 0; i < g.numRows; i++ {
 		if i > 0 {
 			yOffset += g.heights[i - 1]
@@ -231,7 +227,7 @@ func (g *batchGrid) Place(width , height int) (int ,int) {
 						continue
 					}
 				}
-				println("Place at g.grid[i][j]:", i, j)
+				// println("placed at", i, ",", j) // debug
 				temp := 0
 				for ind := j; ind < y; ind++ {
 					temp += g.widths[ind]
@@ -251,12 +247,10 @@ func (g *batchGrid) Place(width , height int) (int ,int) {
 }
 
 func (g *batchGrid) splitRow(rowNum, howMuch int) {
-	//println("row split")
 	if howMuch > g.heights[rowNum] || howMuch <= 0 {
 		panic("something very wrong is happening.")		
 	}
 	if howMuch == g.heights[rowNum] {
-		println("same as height, skipping...")
 		return
 	}
 	g.numRows++
@@ -275,12 +269,10 @@ func (g *batchGrid) splitRow(rowNum, howMuch int) {
 }
 
 func (g *batchGrid) splitCol(colNum, howMuch int) {
-	//println("col split")
 	if howMuch > g.widths[colNum] || howMuch <= 0 {
 		panic(fmt.Sprintf("something very wrong is happening. tried to split a %d-pixel wide column at %d", g.widths[colNum], howMuch))
 	}
 	if howMuch == g.widths[colNum] {
-		println("same as width, skipping...")
 		return
 	}
 	g.numCols++
@@ -304,36 +296,29 @@ func (g *batchGrid) check(width, height, i, j int) (able bool, x, y int) {
 	for temp := 0; x < g.numRows && temp + g.heights[x] < height; x++ {
 		temp += g.heights[x]
 		if g.grid[x][y] {
-			println("spot is taken on left edge")
 			return false, -1, -1
 		}
 	}
 	if g.grid[x][y] {
-		println("spot is taken on left edge")
 		return false, -1, -1
 	}
 	if x >= g.numRows {
-		println("too short (shouldn't ever be printed...)")
 		return false, -1, -1
 	}
 	for temp := 0; y < g.numCols && temp + g.widths[y] < width; y++ {
 		temp += g.widths[y]
 		if g.grid[x][y] {
-			println("spot is taken on bottom edge")
 			return false, -1, -1
 		}
 	}
 	if g.grid[x][y] {
-		println("spot is taken on bottom edge")
 		return false, -1, -1
 	}
 	if y >= g.numCols {
-		println("too squished in")
 		return false, -2, -2 // sentinel value to avoid unecessary checks
 	}
 	for ; i < x; i++ {
 		if g.grid[i][y] {
-			println("spot is taken on the right edge")
 			return false, -1, -1
 		}
 	}
@@ -341,27 +326,10 @@ func (g *batchGrid) check(width, height, i, j int) (able bool, x, y int) {
 }
 
 func (g *batchGrid) markAsUsed(starti, startj, endi, endj int) {
-	// println("before:")
-	// g.printGrid()
-	println(starti, startj, "->", endi, endj)
 	for i := starti; i <= endi; i++ {
-		println("i =", i)
 		for j := startj; j <= endj; j++ {
-			// println("*******************")
-			// g.printGrid()
 			g.grid[i][j] = true
-			// println("*******************")
-			// g.printGrid()
-			// println("*******************")
 		}
-	}
-	// println("after")
-	// g.printGrid()
-}
-
-func (g *batchGrid) checkIfSame(i, j int) {
-	if &g.grid[i][j] == &g.grid[i+1][j] {
-		panic("fuck this shit")
 	}
 }
 
@@ -382,7 +350,6 @@ func GenerateSpriteSheet(images []Image, log *golog.Logger) (sheet draw.Image, s
 	// data for the individual sprites within the sheet
 	for _, img := range images {
 		bounds := img.Bounds()
-		fmt.Printf("image bounds:%v\n", bounds)
 
 		_, name, factor := IsMagnified(img.Name)
 		thisTopPadding := math.Ceil(factor)
@@ -413,14 +380,13 @@ func GenerateSpriteSheet(images []Image, log *golog.Logger) (sheet draw.Image, s
 		}
 
 		x, y := grid.Place(bounds.Dx()+thisTopPaddingInt, bounds.Dy()+thisTopPaddingInt)
-		println(x, y)
 
 		newSprite := Sprite{
 			name,
 			factor,
 			thisTopPaddingInt,
 			thisBottomPaddingInt,
-			image.Rect(x, y+thisTopPaddingInt-fudge, x+bounds.Dx(), y+thisTopPaddingInt+bounds.Dy()),
+			image.Rect(x-fudge, y+thisTopPaddingInt-fudge, x+bounds.Dx(), y+thisTopPaddingInt+bounds.Dy()),
 		}
 		sprites = append(sprites, newSprite)
 	}

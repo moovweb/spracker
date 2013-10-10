@@ -9,6 +9,7 @@ import (
 	"os"
 	"time"
 	"path/filepath"
+	"strconv"
 )
 
 import (
@@ -24,9 +25,21 @@ func main() {
 		os.RemoveAll("kittens")
 		os.Mkdir("kittens", 0755)
 
+		reps := 0
+		var err error
+		if len(os.Args) > 2 {
+			reps, err = strconv.Atoi(os.Args[2])
+			if err != nil {
+				reps = 10
+			}
+		}
+		if reps <= 0 {
+			reps = 10  //default to 10
+		}
+
 		// Fetch ten pseudo-randomly sized images from http://placekitten.com and
 		// write them to disk.
-		for i := 0; i < 10; i++ {
+		for i := 0; i < reps; i++ {
 			rand.Seed(time.Now().UnixNano())
 
 			size := 64 + rand.Int()%20
