@@ -15,7 +15,7 @@ import (
 )
 
 import (
-	"golog"
+	"github.com/moovweb/golog"
 )
 
 // We need to bundle an image with its name (derived from its filename).
@@ -158,7 +158,7 @@ func GenerateSpriteSheet(images []Image, log *golog.Logger) (sheet draw.Image, s
 
 		// see if the image dimensions are a multiple of the magnification factor
 		fudge := 0
-		if (math.Mod(float64(bounds.Dy()), factor) != 0) {
+		if math.Mod(float64(bounds.Dy()), factor) != 0 {
 			fudge = 1
 			log.Warningf("Height of sprite `%s` (%dpx) is not a multiple of its magnification factor (%vx); rounding up to avoid truncated pixels.", name, bounds.Dy(), factor)
 		}

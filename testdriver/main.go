@@ -11,8 +11,8 @@ import (
 )
 
 import (
-	"golog"
-	"spracker"
+	"github.com/moovweb/golog"
+	"github.com/moovweb/spracker"
 )
 
 func main() {
